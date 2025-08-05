@@ -1,0 +1,24 @@
+server:
+  port: 8082
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/banking_system
+      # Or for Atlas: mongodb+srv://username:password@cluster.mongodb.net/banking_system
+
+  cache:
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=10m
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
