@@ -2,23 +2,44 @@ server:
   port: 8081
 
 spring:
+  application:
+    name: account-service
+
   data:
     mongodb:
-      uri: mongodb://localhost:27017/banking_system
-      # Or for Atlas: mongodb+srv://username:password@cluster.mongodb.net/banking_system
+      uri: mongodb+srv://hila31097:hila31097@cluster.0hmmqt4.mongodb.net/banking_accounts
+      #      //todo change to env variable
+      auto-index-creation: true
 
   cache:
     caffeine:
-      spec: maximumSize=1000,expireAfterWrite=10m
+      spec: maximumSize=1000,expireAfterAccess=30m
+
+
+logging:
+  level:
+    com.banking: DEBUG
+    org.springframework.data.mongodb: DEBUG
+
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
 
 springdoc:
   api-docs:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
+    enabled: true
+  packages-to-scan: com.banking.accountservice.controller
+
+app:
+  cache:
+    account-cache-name: accounts
+    customer-cache-name: customers
