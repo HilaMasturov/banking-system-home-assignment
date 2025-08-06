@@ -31,12 +31,14 @@ public class Customer {
     private String lastName;
 
     @Email(message = "Invalid email format")
+    @NotBlank(message = "Email is required")
     @Indexed(unique = true)
     private String email;
 
     @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Invalid phone number format")
+    @NotBlank(message = "Phone number is required")
     private String phoneNumber;
 
-    @CreatedDate
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 }

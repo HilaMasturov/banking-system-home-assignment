@@ -8,7 +8,7 @@ spring:
   data:
     mongodb:
       uri: mongodb+srv://hila31097:hila31097@cluster.0hmmqt4.mongodb.net/banking_accounts
-      #      //todo change to env variable
+#        ${ACCOUNT_DB_URI}
       auto-index-creation: true
 
   cache:
@@ -20,6 +20,10 @@ logging:
   level:
     com.banking: DEBUG
     org.springframework.data.mongodb: DEBUG
+    org.springdoc: DEBUG
+    org.springframework.web: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{correlationId}] %logger{36} - %msg%n"
 
 
 management:

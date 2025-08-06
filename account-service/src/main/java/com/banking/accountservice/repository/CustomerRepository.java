@@ -9,23 +9,11 @@ import java.util.Optional;
 @Repository
 public interface CustomerRepository extends MongoRepository<Customer, String> {
 
-    /**
-     * Find customer by email
-     */
     Optional<Customer> findByEmail(String email);
 
-    /**
-     * Check if email exists
-     */
     boolean existsByEmail(String email);
 
-    /**
-     * Find customer by phone number
-     */
     Optional<Customer> findByPhoneNumber(String phoneNumber);
 
-    /**
-     * Check if phone number exists
-     */
     boolean existsByPhoneNumber(String phoneNumber);
 }

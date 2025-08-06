@@ -9,7 +9,7 @@ spring:
   data:
     mongodb:
       uri: mongodb+srv://hila31097:hila31097@cluster.0hmmqt4.mongodb.net/banking_transactions
-#      //todo change to env variable
+#      ${TRANSACTION_DB_URI}
       auto-index-creation: true
 
   cache:
