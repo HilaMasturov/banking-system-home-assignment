@@ -5,10 +5,12 @@ spring:
   application:
     name: account-service
 
+  config:
+    import: optional:classpath:secrets.properties
+
   data:
     mongodb:
-      uri: mongodb+srv://hila31097:hila31097@cluster.0hmmqt4.mongodb.net/banking_accounts
-#        ${ACCOUNT_DB_URI}
+      uri: ${mongodb.uri}
       auto-index-creation: true
 
   cache:
