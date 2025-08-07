@@ -20,7 +20,5 @@ target/
 .Trashes
 ehthumbs.db
 Thumbs.db
-.env
-.env.local
-.env.production
+secrets.properties
 
