@@ -1,6 +1,6 @@
 package com.banking.accountservice.repository;
 
-import com.banking.accountservice.model.entity.Customer;
+import com.banking.accountservice.entity.Customer;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

@@ -17,6 +17,9 @@ spring:
     caffeine:
       spec: maximumSize=1000,expireAfterAccess=30m
 
+account-service:
+  url: http://localhost:8081
+  timeout: 5000
 
 logging:
   level:
@@ -40,10 +43,6 @@ springdoc:
     enabled: true
   packages-to-scan: com.banking.transactionservice.controller
 
-app:
-  cache:
-    transaction-cache-name: transactions
-  account-service:
-    base-url: http://localhost:8081
-    timeout: 5000
+
+
 

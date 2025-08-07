@@ -1,5 +1,7 @@
-package com.banking.transactionservice.model.entity;
+package com.banking.transactionservice.entity;
 
+import com.banking.transactionservice.entity.enums.TransactionStatus;
+import com.banking.transactionservice.entity.enums.TransactionType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -51,15 +53,5 @@ public class Transaction {
     @CreatedDate
     private LocalDateTime createdAt;
 
-    public enum TransactionType {
-        DEPOSIT,
-        WITHDRAWAL,
-        TRANSFER
-    }
 
-    public enum TransactionStatus {
-        PENDING,
-        COMPLETED,
-        FAILED
-    }
 }

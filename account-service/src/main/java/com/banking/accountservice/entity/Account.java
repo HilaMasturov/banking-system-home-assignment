@@ -1,5 +1,7 @@
-package com.banking.accountservice.model.entity;
+package com.banking.accountservice.entity;
 
+import com.banking.accountservice.entity.enums.AccountStatus;
+import com.banking.accountservice.entity.enums.AccountType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "accounts")
@@ -54,14 +56,4 @@ public class Account {
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    public enum AccountType {
-        SAVINGS,
-        CHECKING
-    }
-
-    public enum AccountStatus {
-        ACTIVE,
-        INACTIVE,
-        BLOCKED
-    }
 }

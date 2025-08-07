@@ -1,116 +1,123 @@
-# Account Service
+# Banking System - Microservices Architecture
 
-The Account Service is a Spring Boot microservice that manages customer accounts in the banking system. It provides REST APIs for account creation, retrieval, updates, and balance management.
+A complete banking system built with microservices architecture consisting of two Spring Boot services and a React frontend. The system handles account management and transaction processing with modern banking operations.
 
-## Features
+## Architecture Overview
 
-- Create and manage customer accounts
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   React         │───▶│   Account       │───▶│   MongoDB       │
+│   Frontend      │    │   Service       │    │   Database      │
+│   (Port 3000)   │    │   (Port 8081)   │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                               │
+                               ▼
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │ Transaction     │───▶│   MongoDB       │
+                       │   Service       │    │   Database      │
+                       │   (Port 8082)   │    │                 │
+                       └─────────────────┘    └─────────────────┘
+```
+
+## Services
+
+### Account Service (Port 8081)
+Manages customer accounts, account creation, balance tracking, and account status management.
+
+**Key Features:**
+- Customer account management
 - Account balance tracking
 - Account status management (Active, Inactive, Blocked)
 - Support for different account types (Savings, Checking)
-- Caching with Caffeine for improved performance
-- Comprehensive API documentation with Swagger
-- MongoDB integration for data persistence
+- Caffeine caching for performance optimization
+
+### Transaction Service (Port 8082)
+Handles all banking transactions including deposits, withdrawals, transfers, and transaction history.
+
+**Key Features:**
+- Deposit money to accounts
+- Withdraw money from accounts with balance validation
+- Transfer money between accounts
+- Transaction history with pagination
+- Transaction integrity and validation
 
 ## Technology Stack
 
-- Java 21
-- Spring Boot 3.2+
-- Spring Data MongoDB
-- Caffeine Cache
-- Lombok
-- Swagger/OpenAPI 3
-- JUnit 5 & Mockito
+- **Java 21**
+- **Spring Boot 3.2+**
+- **Spring Data MongoDB** for data persistence
+- **Caffeine Cache** for performance optimization
+- **Lombok** for reducing boilerplate code
+- **Maven** for build management
+- **Swagger/OpenAPI 3** for API documentation
+- **JUnit 5 & Mockito** for comprehensive testing
+- **React 18+** for frontend (optional)
 
 ## Prerequisites
 
-- Java 21
+- Java 21 or higher
 - Maven 3.8+
-- MongoDB Atlas cluster (or local MongoDB 4.4+)
-- Network access to MongoDB Atlas
+- MongoDB 4.4+ (local) or MongoDB Atlas
+- Node.js 16+ (for frontend development)
 
-## Getting Started
+## Quick Start
 
-### 1. Clone the repository
+### 1. Clone the Repository
 ```bash
 git clone <repository-url>
+cd banking-system
+```
+
+### 2. Database Setup
+
+#### Option A: Local MongoDB
+```bash
+# Install and start MongoDB
+brew install mongodb/brew/mongodb-community
+brew services start mongodb-community
+```
+
+#### Option B: MongoDB Atlas (Recommended)
+1. Create account at [MongoDB Atlas](https://www.mongodb.com/atlas)
+2. Create a cluster and get connection string
+3. Update `application.yml` in both services
+
+### 3. Start the Services
+
+#### Account Service
+```bash
 cd account-service
-```
-
-### 2. Environment Setup
-
-#### Create Environment File
-Copy the example environment file and configure your MongoDB connection:
-
-```bash
-cp .env.example .env
-```
-
-Edit the `.env` file with your MongoDB connection details:
-
-```bash
-# For MongoDB Atlas
-MONGODB_URI=mongodb+srv://your_username:your_password@your_cluster.mongodb.net/banking_accounts
-
-# For Local MongoDB
-MONGODB_URI=mongodb://localhost:27017/banking_accounts
-```
-
-#### MongoDB Setup Options
-
-**Option 1: MongoDB Atlas (Recommended)**
-1. Create a free account at [MongoDB Atlas](https://www.mongodb.com/atlas)
-2. Create a new cluster
-3. Create a database user
-4. Whitelist your IP address
-5. Get your connection string and update the `.env` file
-
-**Option 2: Local MongoDB**
-1. Install MongoDB Community Edition
-2. Start MongoDB service
-3. Use the local connection string in your `.env` file
-
-#### Load Environment Variables
-Make sure to source the environment file before running the application:
-
-```bash
-# On Unix/Linux/macOS
-source .env
-export $(cut -d= -f1 .env)
-
-# On Windows (Command Prompt)
-for /f "delims=" %i in (.env) do set %i
-
-# On Windows (PowerShell)
-Get-Content .env | ForEach-Object { $name, $value = $_.split('='); [Environment]::SetEnvironmentVariable($name, $value) }
-```
-
-### 3. Build and run the application
-
-#### Using Maven
-```bash
 mvn clean install
 mvn spring-boot:run
 ```
+Service will be available at: http://localhost:8081
 
-#### Using your IDE
-1. Import the project into your IDE
-2. Make sure environment variables are loaded
-3. Run the `AccountServiceApplication` class
-
-The service will start on port 8081 and connect to your MongoDB database.
-
-### 4. Verify the Setup
-
-#### Health Check
+#### Transaction Service
 ```bash
+cd transaction-service
+mvn clean install
+mvn spring-boot:run
+```
+Service will be available at: http://localhost:8082
+
+### 4. Verify Setup
+
+#### Health Checks
+```bash
+# Account Service
 curl http://localhost:8081/actuator/health
+
+# Transaction Service
+curl http://localhost:8082/actuator/health
 ```
 
 #### API Documentation
-Open http://localhost:8081/swagger-ui.html to view the API documentation.
+- Account Service: http://localhost:8081/swagger-ui.html
+- Transaction Service: http://localhost:8082/swagger-ui.html
 
 ## API Endpoints
+
+### Account Service (Port 8081)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -120,137 +127,286 @@ Open http://localhost:8081/swagger-ui.html to view the API documentation.
 | PUT | `/api/v1/accounts/{accountId}` | Update account details |
 | GET | `/api/v1/accounts/{accountId}/balance` | Get account balance |
 
+### Transaction Service (Port 8082)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/transactions/deposit` | Deposit money to account |
+| POST | `/api/v1/transactions/withdraw` | Withdraw money from account |
+| POST | `/api/v1/transactions/transfer` | Transfer money between accounts |
+| GET | `/api/v1/transactions/account/{accountId}` | Get transaction history |
+| GET | `/api/v1/transactions/{transactionId}` | Get transaction details |
+
+## Configuration
+
+### Account Service Configuration
+
+Update `account-service/src/main/resources/application.yml`:
+
+```yaml
+server:
+  port: 8081
+
+spring:
+  application:
+    name: account-service
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/banking_accounts
+      # For MongoDB Atlas:
+      # uri: mongodb+srv://username:password@cluster.mongodb.net/banking_accounts
+
+logging:
+  level:
+    com.banking.accountservice: DEBUG
+```
+
+### Transaction Service Configuration
+
+Update `transaction-service/src/main/resources/application.yml`:
+
+```yaml
+server:
+  port: 8082
+
+spring:
+  application:
+    name: transaction-service
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/banking_transactions
+
+account-service:
+  url: http://localhost:8081
+
+logging:
+  level:
+    com.banking.transactionservice: DEBUG
+```
+
 ## Testing
 
-### Run Unit Tests
+### Run All Tests
 ```bash
+# Account Service
+cd account-service
+mvn test
+
+# Transaction Service
+cd transaction-service
 mvn test
 ```
 
-### Generate Test Coverage Report
+### Generate Coverage Report
 ```bash
 mvn clean test jacoco:report
 ```
 
-The coverage report will be available in `target/site/jacoco/index.html`.
+Coverage reports available at:
+- Account Service: `account-service/target/site/jacoco/index.html`
+- Transaction Service: `transaction-service/target/site/jacoco/index.html`
 
-### Test with Different Profiles
-```bash
-# Run tests with test profile
-mvn test -Dspring.profiles.active=test
-```
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `MONGODB_URI` | MongoDB connection string | `mongodb+srv://user:pass@cluster.mongodb.net/banking_accounts` |
-| `SPRING_PROFILES_ACTIVE` | Spring profile to use | `dev`, `prod`, `test` |
-
-### Application Profiles
-
-The application supports different profiles:
-
-- **dev**: Development configuration with debug logging
-- **prod**: Production configuration with optimized settings
-- **test**: Test configuration with embedded test database
-
-To run with a specific profile:
-```bash
-mvn spring-boot:run -Dspring.profiles.active=prod
-```
+### Test Categories
+- **Unit Tests**: Service layer, Repository layer, Controller layer
+- **Integration Tests**: End-to-end API testing
+- **Contract Tests**: Service-to-service communication
 
 ## Docker Support
 
-### Build Docker Image
+### Build Images
 ```bash
+# Account Service
+cd account-service
 docker build -t account-service .
-```
 
-### Run with Docker
-```bash
-# Create .env file first, then run:
-docker run --env-file .env -p 8081:8081 account-service
+# Transaction Service
+cd transaction-service
+docker build -t transaction-service .
 ```
 
 ### Docker Compose
 ```bash
+# From project root
 docker-compose up
 ```
 
-Make sure your `docker-compose.yml` includes environment variables:
+Example `docker-compose.yml`:
 ```yaml
+version: '3.8'
 services:
+  mongodb:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
   account-service:
-    build: .
+    build: ./account-service
     ports:
       - "8081:8081"
-    env_file:
-      - .env
+    depends_on:
+      - mongodb
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/banking_accounts
+
+  transaction-service:
+    build: ./transaction-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mongodb
+      - account-service
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/banking_transactions
+      - ACCOUNT_SERVICE_URL=http://account-service:8081
+
+volumes:
+  mongodb_data:
 ```
+
+## Development
+
+### Project Structure
+```
+banking-system/
+├── account-service/
+│   ├── src/main/java/com/banking/accountservice/
+│   ├── src/test/java/
+│   ├── pom.xml
+│   └── README.md
+├── transaction-service/
+│   ├── src/main/java/com/banking/transactionservice/
+│   ├── src/test/java/
+│   ├── pom.xml
+│   └── README.md
+├── frontend/ (optional)
+│   ├── src/
+│   ├── package.json
+│   └── README.md
+├── docker-compose.yml
+└── README.md
+```
+
+### Adding New Features
+
+1. **Create Feature Branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Implement Changes**
+    - Add business logic in service layer
+    - Create/update DTOs and entities
+    - Add REST endpoints in controllers
+    - Write comprehensive tests
+
+3. **Test Changes**
+   ```bash
+   mvn clean test
+   ```
+
+4. **Update Documentation**
+    - Update API documentation
+    - Add/update README sections
+    - Update Swagger annotations
 
 ## Monitoring and Observability
 
 ### Health Endpoints
-- Health check: `http://localhost:8081/actuator/health`
-- Metrics: `http://localhost:8081/actuator/metrics`
-- Info: `http://localhost:8081/actuator/info`
+- Account Service Health: `http://localhost:8081/actuator/health`
+- Transaction Service Health: `http://localhost:8082/actuator/health`
+
+### Metrics
+- Account Service Metrics: `http://localhost:8081/actuator/metrics`
+- Transaction Service Metrics: `http://localhost:8082/actuator/metrics`
 
 ### Logging
-Logs include correlation IDs for request tracing. Configure log levels in `application.yml`:
-
-```yaml
-logging:
-  level:
-    com.banking: DEBUG
-```
+Both services include structured logging with correlation IDs for request tracing.
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **MongoDB Connection Failed**
-    - Verify your connection string in `.env`
-    - Check network connectivity to MongoDB Atlas
-    - Ensure IP whitelist includes your current IP
+1. **Service Communication Issues**
+   ```bash
+   # Check if Account Service is accessible from Transaction Service
+   curl http://localhost:8081/actuator/health
+   ```
 
-2. **Environment Variables Not Loaded**
-    - Make sure you've sourced the `.env` file
-    - Verify environment variables are set: `echo $MONGODB_URI`
+2. **MongoDB Connection Issues**
+   ```bash
+   # Test MongoDB connection
+   mongosh "mongodb://localhost:27017/banking_accounts"
+   ```
 
-3. **Port Already in Use**
-    - Change the port in `application.yml` or set `SERVER_PORT` environment variable
+3. **Port Conflicts**
+   ```bash
+   # Check which ports are in use
+   lsof -i :8081
+   lsof -i :8082
+   ```
 
-4. **Tests Failing**
-    - Ensure test profile is configured correctly
-    - Check if test containers are properly set up
+4. **Cache Issues**
+   ```bash
+   # Clear Maven cache and rebuild
+   mvn clean install -U
+   ```
 
-### Getting Help
+### Service Dependencies
 
-If you encounter issues:
-1. Check the application logs for detailed error messages
-2. Verify all environment variables are correctly set
-3. Ensure MongoDB is accessible from your network
-4. Check the health endpoint for service status
+**Transaction Service depends on Account Service**
+- Ensure Account Service is running before starting Transaction Service
+- Transaction Service validates account existence through Account Service APIs
+
+## Performance Considerations
+
+### Caching Strategy
+- **Account Service**: Caches account details, customer accounts, and balances
+- **Transaction Service**: Caches transaction history and individual transactions
+
+### Database Optimization
+- Proper indexing on frequently queried fields
+- Separate databases for each service
+- Connection pooling configured
 
 ## Security Notes
 
-- Never commit `.env` files to version control
-- Use different credentials for development and production
-- Regularly rotate database passwords
-- Consider using MongoDB Atlas for secure, managed database hosting
-- Use environment-specific configurations for different deployment stages
+- Services communicate over HTTP (configure HTTPS for production)
+- Input validation on all endpoints
+- Proper error handling without exposing sensitive information
+- Consider implementing JWT authentication for production use
+
+## Production Deployment
+
+### Environment Variables
+
+| Service | Variable | Description |
+|---------|----------|-------------|
+| Account | `SPRING_DATA_MONGODB_URI` | MongoDB connection string |
+| Account | `SERVER_PORT` | Service port (default: 8081) |
+| Transaction | `SPRING_DATA_MONGODB_URI` | MongoDB connection string |
+| Transaction | `SERVER_PORT` | Service port (default: 8082) |
+| Transaction | `ACCOUNT_SERVICE_URL` | Account Service URL |
+
+### Deployment Checklist
+
+- [ ] Configure production MongoDB cluster
+- [ ] Set up proper logging aggregation
+- [ ] Configure health check endpoints
+- [ ] Set up monitoring and alerting
+- [ ] Configure load balancers
+- [ ] Set up CI/CD pipelines
+- [ ] Configure backup strategies
 
 ## Contributing
 
-1. Create a feature branch
-2. Make your changes
-3. Add tests for new functionality
-4. Run the full test suite
-5. Submit a pull request
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-This project is part of a home assignment and is for educational purposes.
+This project is for educational purposes as part of a home assignment.
