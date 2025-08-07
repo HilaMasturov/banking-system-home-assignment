@@ -1,13 +1,76 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Core Banking Colors */
+    --background: 0 0% 100%;
+    --foreground: 218 11% 20%;
+    
+    /* Card System */
+    --card: 0 0% 100%;
+    --card-foreground: 218 11% 20%;
+    
+    /* Banking Brand Colors */
+    --primary: 355 85% 45%;        /* Banking Red */
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 355 85% 40%;
+    
+    /* Secondary Banking Colors */
+    --secondary: 220 15% 96%;
+    --secondary-foreground: 218 11% 20%;
+    
+    /* Banking Accent Colors */
+    --accent: 212 100% 50%;        /* Banking Blue */
+    --accent-foreground: 0 0% 100%;
+    
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 355 85% 55%;        /* Changed from yellow to red variant */
+    --warning-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* UI Elements */
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 9% 46%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 355 85% 45%;
+    
+    /* Banking Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(355 85% 45%), hsl(355 85% 55%));
+    --gradient-hero: linear-gradient(135deg, hsl(355 85% 45%), hsl(212 100% 50%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(220 15% 98%));
+    
+    /* Banking Shadows */
+    --shadow-card: 0 4px 12px -2px hsl(355 85% 45% / 0.1);
+    --shadow-button: 0 2px 8px -2px hsl(355 85% 45% / 0.2);
+    --shadow-elevated: 0 8px 32px -8px hsl(355 85% 45% / 0.15);
+    
+    /* Typography Scale */
+    --font-heading: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+    /* Banking Spacing & Effects */
+    --radius: 0.75rem;
+    --radius-sm: 0.5rem;
+    --radius-lg: 1rem;
+    
+    /* Banking Animations */
+    --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
 }
