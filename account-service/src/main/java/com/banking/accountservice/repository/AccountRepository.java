@@ -1,6 +1,7 @@
 package com.banking.accountservice.repository;
 
-import com.banking.accountservice.model.entity.Account;
+import com.banking.accountservice.entity.Account;
+import com.banking.accountservice.entity.enums.AccountStatus;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -21,5 +22,5 @@ public interface AccountRepository extends MongoRepository<Account, String> {
 
     boolean existsByAccountNumber(String accountNumber);
 
-    List<Account> findByStatus(Account.AccountStatus status);
+    List<Account> findByStatus(AccountStatus status);
 }

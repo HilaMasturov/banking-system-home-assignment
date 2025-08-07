@@ -1,7 +1,8 @@
-package com.banking.accountservice.service;
+package com.banking.accountservice.repository;
 
-import com.banking.accountservice.model.entity.Account;
-import com.banking.accountservice.repository.AccountRepository;
+import com.banking.accountservice.entity.Account;
+import com.banking.accountservice.entity.enums.AccountStatus;
+import com.banking.accountservice.entity.enums.AccountType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,10 +31,10 @@ class AccountRepositoryTest {
         testAccount1 = Account.builder()
                 .customerId("customer123")
                 .accountNumber("ACC123456789")
-                .accountType(Account.AccountType.SAVINGS)
+                .accountType(AccountType.SAVINGS)
                 .balance(new BigDecimal("1000.00"))
                 .currency("USD")
-                .status(Account.AccountStatus.ACTIVE)
+                .status(AccountStatus.ACTIVE)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -41,10 +42,10 @@ class AccountRepositoryTest {
         testAccount2 = Account.builder()
                 .customerId("customer123")
                 .accountNumber("ACC987654321")
-                .accountType(Account.AccountType.CHECKING)
+                .accountType(AccountType.CHECKING)
                 .balance(new BigDecimal("500.00"))
                 .currency("USD")
-                .status(Account.AccountStatus.ACTIVE)
+                .status(AccountStatus.ACTIVE)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();

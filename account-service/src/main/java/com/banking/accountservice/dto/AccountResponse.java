@@ -1,6 +1,8 @@
 package com.banking.accountservice.dto;
 
-import com.banking.accountservice.model.entity.Account;
+import com.banking.accountservice.entity.Account;
+import com.banking.accountservice.entity.enums.AccountStatus;
+import com.banking.accountservice.entity.enums.AccountType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -8,16 +10,16 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 public class AccountResponse {
 
     private String accountId;
     private String customerId;
     private String accountNumber;
-    private Account.AccountType accountType;
+    private AccountType accountType;
     private BigDecimal balance;
     private String currency;
-    private Account.AccountStatus status;
+    private AccountStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

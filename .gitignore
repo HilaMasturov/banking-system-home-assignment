@@ -21,4 +21,7 @@ target/
 ehthumbs.db
 Thumbs.db
 secrets.properties
-
+/account-service/node_modules/
+/account-service/src/main/resources/secrets.properties
+/account-service/package.json
+/account-service/package-lock.json
