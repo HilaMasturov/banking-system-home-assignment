@@ -12,15 +12,16 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
 public class AccountServiceClientImpl implements AccountServiceClient {
     private final RestTemplate restTemplate;
@@ -59,53 +60,22 @@ public class AccountServiceClientImpl implements AccountServiceClient {
     }
 
     @Override
-    public BigDecimal getAccountBalance(String accountId) {
-        try {
-            log.debug("Getting balance for account: {}", accountId);
-            String url = accountServiceUrl + "/api/v1/accounts/" + accountId + "/balance";
-            ResponseEntity<BigDecimal> response = restTemplate.getForEntity(url, BigDecimal.class);
-
-            BigDecimal balance = response.getBody();
-            log.debug("Retrieved balance for account {}: {}", accountId, balance);
-            return balance;
-
-        } catch (HttpClientErrorException e) {
-            // Handle all HTTP client errors here
-            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                log.error("Account {} not found when getting balance", accountId);
-                throw new AccountNotFoundException("Account not found: " + accountId);
-            } else {
-                // For other HTTP errors, throw AccountServiceException
-                log.error("HTTP error getting balance for account {}: {} - {}", accountId, e.getStatusCode(), e.getResponseBodyAsString());
-                throw new AccountServiceException("Failed to get account balance: " + e.getStatusCode());
-            }
-        } catch (ResourceAccessException e) {
-            log.error("Failed to connect to Account Service for balance of account {}: {}", accountId, e.getMessage());
-            throw new AccountServiceException("Account Service is unavailable", e);
-        } catch (Exception e) {
-            log.error("Unexpected error getting balance for account {}: {}", accountId, e.getMessage());
-            throw new AccountServiceException("Failed to get account balance", e);
-        }
-    }
-
-    @Override
     public void updateAccountBalance(String accountId, BigDecimal newBalance) {
         try {
             log.debug("Updating balance for account {} to: {}", accountId, newBalance);
             String url = accountServiceUrl + "/api/v1/accounts/" + accountId + "/balance";
 
-            HttpEntity<BigDecimal> request = new HttpEntity<>(newBalance);
-            restTemplate.exchange(url, HttpMethod.PUT, request, Void.class);
+            Map<String, BigDecimal> requestBody = Map.of("balance", newBalance);
+            HttpEntity<Map<String, BigDecimal>> request = new HttpEntity<>(requestBody);
 
+            restTemplate.exchange(url, HttpMethod.PUT, request, Void.class);
             log.info("Successfully updated balance for account {}", accountId);
 
         } catch (HttpClientErrorException e) {
-            // Handle all HTTP client errors here
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
                 log.error("Account {} not found when updating balance", accountId);
                 throw new AccountNotFoundException("Account not found: " + accountId);
             } else {
-                // For other HTTP errors, throw AccountServiceException
                 log.error("HTTP error updating balance for account {}: {} - {}", accountId, e.getStatusCode(), e.getResponseBodyAsString());
                 throw new AccountServiceException("Failed to update account balance: " + e.getStatusCode());
             }
@@ -115,6 +85,39 @@ public class AccountServiceClientImpl implements AccountServiceClient {
         } catch (Exception e) {
             log.error("Unexpected error updating balance for account {}: {}", accountId, e.getMessage());
             throw new AccountServiceException("Failed to update account balance", e);
+        }
+    }
+
+    @Override
+    public BigDecimal getAccountBalance(String accountId) {
+        try {
+            log.debug("Getting balance for account: {}", accountId);
+            String url = accountServiceUrl + "/api/v1/accounts/" + accountId + "/balance";
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+
+            Map<String, Object> balanceResponse = response.getBody();
+            if (balanceResponse == null || !balanceResponse.containsKey("balance")) {
+                throw new AccountServiceException("Invalid balance response format");
+            }
+
+            BigDecimal balance = new BigDecimal(balanceResponse.get("balance").toString());
+            log.debug("Retrieved balance for account {}: {}", accountId, balance);
+            return balance;
+
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                log.error("Account {} not found when getting balance", accountId);
+                throw new AccountNotFoundException("Account not found: " + accountId);
+            } else {
+                log.error("HTTP error getting balance for account {}: {} - {}", accountId, e.getStatusCode(), e.getResponseBodyAsString());
+                throw new AccountServiceException("Failed to get account balance: " + e.getStatusCode());
+            }
+        } catch (ResourceAccessException e) {
+            log.error("Failed to connect to Account Service for balance of account {}: {}", accountId, e.getMessage());
+            throw new AccountServiceException("Account Service is unavailable", e);
+        } catch (Exception e) {
+            log.error("Unexpected error getting balance for account {}: {}", accountId, e.getMessage());
+            throw new AccountServiceException("Failed to get account balance", e);
         }
     }
 
