@@ -35,8 +35,9 @@ Download from [MongoDB Community Server](https://www.mongodb.com/try/download/co
 git clone <repository-url>
 cd banking-system-home-assignment
 
-# Initialize databases
-./scripts/init-databases.sh
+# Create required secrets.properties files
+echo "mongodb.uri=mongodb://localhost:27017/banking_accounts" > account-service/src/main/resources/secrets.properties
+echo "mongodb.uri=mongodb://localhost:27017/banking_transactions" > transaction-service/src/main/resources/secrets.properties
 ```
 
 ### 3. Start Services
@@ -62,7 +63,7 @@ npm run dev
 
 ### 4. Access the Application
 
-- **Frontend**: http://localhost:3000
+            - **Frontend**: http://localhost:8080
 - **Account Service API**: http://localhost:8081/swagger-ui.html
 - **Transaction Service API**: http://localhost:8082/swagger-ui.html
 
@@ -91,13 +92,13 @@ sudo systemctl start mongodb          # Ubuntu
 # Check which ports are in use
 lsof -i :8081
 lsof -i :8082
-lsof -i :3000
+            lsof -i :8080
 ```
 
 ### Database Issues
 ```bash
-# Reinitialize databases
-./scripts/init-databases.sh
+# Services will create databases automatically on first startup
+# Make sure secrets.properties files exist with correct URIs
 ```
 
 ## 📚 Next Steps

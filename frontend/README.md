@@ -39,7 +39,7 @@ The frontend automatically connects to the backend services. Ensure the services
 npm run dev
 ```
 
-The application will be available at: **http://localhost:3000**
+The application will be available at: **http://localhost:8080**
 
 ### 4. Build for Production
 
@@ -225,7 +225,7 @@ docker build -t banking-frontend .
 
 ### Run Container
 ```bash
-docker run -p 3000:3000 \
+docker run -p 8080:8080 \
   -e VITE_ACCOUNT_SERVICE_URL=http://host.docker.internal:8081 \
   -e VITE_TRANSACTION_SERVICE_URL=http://host.docker.internal:8082 \
   banking-frontend
@@ -236,7 +236,7 @@ docker run -p 3000:3000 \
 frontend:
   build: ./frontend
   ports:
-    - "3000:3000"
+          - "8080:8080"
   environment:
     - VITE_ACCOUNT_SERVICE_URL=http://account-service:8081
     - VITE_TRANSACTION_SERVICE_URL=http://transaction-service:8082
@@ -270,8 +270,8 @@ rm -rf node_modules/.vite
 
 #### 3. Port Conflicts
 ```bash
-# Check if port 3000 is in use
-lsof -i :3000
+# Check if port 8080 is in use
+lsof -i :8080
 
 # Use different port
 npm run dev -- --port 3001

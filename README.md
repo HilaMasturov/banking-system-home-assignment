@@ -7,7 +7,7 @@ A modern banking system built with microservices architecture, featuring real-ti
 ```mermaid
 graph TB
     subgraph "Frontend Layer"
-        A[React Frontend<br/>Port 3000] --> B[Account Service<br/>Port 8081]
+        A[React Frontend<br/>Port 8080] --> B[Account Service<br/>Port 8081]
         A --> C[Transaction Service<br/>Port 8082]
     end
     
@@ -70,64 +70,13 @@ mongosh --eval "db.runCommand('ping')"
 2. Create a cluster and get connection string
 3. Create `secrets.properties` files (see Configuration section)
 
-### 3. Database Initialization
+### 3. Database Setup
 
-When you create a new MongoDB cluster, you'll need to initialize the databases and collections. The services will create them automatically when they start, but you can also initialize them manually:
-
-#### Manual Database Setup
-
-Connect to your MongoDB instance and run these commands:
-
-```javascript
-// Connect to MongoDB
-mongosh
-
-// Create databases
-use banking_accounts
-use banking_transactions
-
-// Create collections with indexes
-use banking_accounts
-db.createCollection("accounts")
-db.createCollection("customers")
-
-// Create indexes for better performance
-db.accounts.createIndex({ "accountId": 1 }, { unique: true })
-db.accounts.createIndex({ "customerId": 1 })
-db.accounts.createIndex({ "accountNumber": 1 }, { unique: true })
-db.customers.createIndex({ "customerId": 1 }, { unique: true })
-db.customers.createIndex({ "email": 1 }, { unique: true })
-
-// Switch to transactions database
-use banking_transactions
-db.createCollection("transactions")
-
-// Create indexes for transactions
-db.transactions.createIndex({ "transactionId": 1 }, { unique: true })
-db.transactions.createIndex({ "accountId": 1 })
-db.transactions.createIndex({ "fromAccountId": 1 })
-db.transactions.createIndex({ "toAccountId": 1 })
-db.transactions.createIndex({ "createdAt": -1 })
-```
-
-#### Automatic Database Setup
-
-The services will automatically create the required databases and collections when they start for the first time. You can also use the provided initialization script:
-
-```bash
-# Run database initialization script (recommended for local setup)
-./scripts/init-databases.sh
-
-# Or manually connect and run the commands
-mongosh
-use banking_accounts
-use banking_transactions
-exit
-```
+The services will automatically create the required databases and collections when they start for the first time. No manual database setup is required.
 
 ### 4. Configuration Setup
 
-Create `secrets.properties` files in both service directories:
+**Required:** Create `secrets.properties` files in both service directories (even for local MongoDB):
 
 **account-service/src/main/resources/secrets.properties:**
 ```properties
@@ -146,6 +95,8 @@ mongodb.uri=mongodb://localhost:27017/banking_transactions
 # For MongoDB Atlas (uncomment and update):
 # mongodb.uri=mongodb+srv://username:password@cluster.mongodb.net/banking_transactions
 ```
+
+**Note:** The `secrets.properties` files are required even for local MongoDB because the services use `${mongodb.uri}` variable substitution in their configuration.
 
 ### 5. Start the Services
 
@@ -174,7 +125,7 @@ npm run dev
 
 - **Account Service**: http://localhost:8081
 - **Transaction Service**: http://localhost:8082
-- **Frontend**: http://localhost:3000
+- **Frontend**: http://localhost:8080
 - **API Documentation**: 
   - Account Service: http://localhost:8081/swagger-ui.html
   - Transaction Service: http://localhost:8082/swagger-ui.html
@@ -277,8 +228,7 @@ banking-system/
 │   │   └── utils/           # Utility functions
 │   ├── public/              # Static assets
 │   └── package.json
-├── scripts/                  # Database initialization scripts
-│   └── init-databases.sh    # MongoDB setup script
+
 ├── docker-compose.yml        # Multi-container setup
 └── README.md                # This file
 ```
@@ -291,11 +241,7 @@ The project is **fully configured for local MongoDB** by default. This makes dev
 
 1. **Install MongoDB locally** (see Database Setup section)
 2. **Start MongoDB service**
-3. **Run the initialization script**:
-   ```bash
-   ./scripts/init-databases.sh
-   ```
-4. **Start the services** - they will automatically connect to local MongoDB
+3. **Start the services** - they will automatically create databases and collections
 
 ### Local Database Benefits
 
@@ -337,15 +283,17 @@ If you want to use MongoDB Atlas instead:
 
 ### Secrets Configuration
 
-Create `secrets.properties` files in both service directories:
+**Required:** Create `secrets.properties` files in both service directories (even for local MongoDB):
 
 ```properties
-# For local MongoDB
+# For local MongoDB (default)
 mongodb.uri=mongodb://localhost:27017/banking_accounts
 
-# For MongoDB Atlas
-mongodb.uri=mongodb+srv://username:password@cluster.mongodb.net/banking_accounts
+# For MongoDB Atlas (uncomment and update):
+# mongodb.uri=mongodb+srv://username:password@cluster.mongodb.net/banking_accounts
 ```
+
+**Note:** The `secrets.properties` files are required because the services use `${mongodb.uri}` variable substitution in their configuration.
 
 ## 🗄️ Database Schema
 
@@ -504,31 +452,27 @@ show dbs
 use banking_accounts
 show collections
 
-# If databases don't exist, run the initialization script
-./scripts/init-databases.sh
+# If databases don't exist, the services will create them automatically on startup
+```
+
+#### 1.1. Missing secrets.properties Files
+If you get "Could not resolve placeholder 'mongodb.uri'" errors, create the required secrets.properties files:
+
+```bash
+# Create secrets.properties files
+echo "mongodb.uri=mongodb://localhost:27017/banking_accounts" > account-service/src/main/resources/secrets.properties
+echo "mongodb.uri=mongodb://localhost:27017/banking_transactions" > transaction-service/src/main/resources/secrets.properties
 ```
 
 #### 2. Database Not Found
-If you get "Database not found" errors, the services will create the databases automatically when they start. You can also manually create them:
-
-```bash
-# Connect to MongoDB
-mongosh
-
-# Create databases
-use banking_accounts
-use banking_transactions
-
-# Exit
-exit
-```
+If you get "Database not found" errors, the services will create the databases automatically when they start. No manual intervention is required.
 
 #### 3. Port Conflicts
 ```bash
 # Check which ports are in use
 lsof -i :8081
 lsof -i :8082
-lsof -i :3000
+            lsof -i :8080
 ```
 
 #### 4. Service Communication Issues
