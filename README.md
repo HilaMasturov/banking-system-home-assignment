@@ -151,16 +151,19 @@ npm run dev
 ## 📊 Demo Screenshots
 
 ### Dashboard View
-![Dashboard](https://via.placeholder.com/800x400/4F46E5/FFFFFF?text=Banking+Dashboard)
+<img width="1272" height="736" alt="image" src="https://github.com/user-attachments/assets/e037bd1d-c772-40aa-99d8-9bf887555ad9" />
 
 ### Customer Management
-![Customer Management](https://via.placeholder.com/800x400/059669/FFFFFF?text=Customer+Management)
+<img width="1272" height="736" alt="image" src="https://github.com/user-attachments/assets/f5da3da6-3f65-414f-9b0f-1325e563d141" />
+<img width="1272" height="736" alt="image" src="https://github.com/user-attachments/assets/cf60db3a-750c-45a4-bda0-9c1dee51cefd" />
 
 ### Transaction Processing
-![Transaction Processing](https://via.placeholder.com/800x400/DC2626/FFFFFF?text=Transaction+Processing)
+<img width="1272" height="736" alt="image" src="https://github.com/user-attachments/assets/06139602-b16e-45c6-918a-3d4e6c020bbf" />
+<img width="1272" height="736" alt="image" src="https://github.com/user-attachments/assets/2edf8687-9a4f-4979-ae76-fa40252d4c71" />
 
 ### Account Management
-![Account Management](https://via.placeholder.com/800x400/7C3AED/FFFFFF?text=Account+Management)
+<img width="1272" height="736" alt="image" src="https://github.com/user-attachments/assets/1071ee75-83e4-48aa-81dd-accdf7079b95" />
+<img width="1272" height="736" alt="image" src="https://github.com/user-attachments/assets/0a1409c3-7b35-4a8b-beef-d167d466fea1" />
 
 ## 🛠️ Technology Stack
 
