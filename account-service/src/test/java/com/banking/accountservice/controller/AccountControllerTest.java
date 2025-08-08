@@ -246,12 +246,14 @@ class AccountControllerTest {
         // Given
         String accountId = "6894577fb75681ff9f6f2729";
         BigDecimal balance = new BigDecimal("1000.00");
+        when(accountService.findById(accountId)).thenReturn(accountResponse);
         when(accountService.getBalance(accountId)).thenReturn(balance);
 
         // When & Then
         mockMvc.perform(get("/api/v1/accounts/{accountId}/balance", accountId))
                 .andExpect(status().isOk())
-                .andExpect(content().string("1000.00"));
+                .andExpect(jsonPath("$.balance").value(1000.00))
+                .andExpect(jsonPath("$.currency").value("USD"));
     }
 
     @Test
