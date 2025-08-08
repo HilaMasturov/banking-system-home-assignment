@@ -209,6 +209,76 @@ class AccountServiceTest {
     }
 
     @Test
+    void updateAccount_ShouldUpdateCurrency_WhenCurrencyProvided() {
+        // Given
+        AccountUpdateRequest updateRequest = AccountUpdateRequest.builder()
+                .currency("EUR")
+                .build();
+
+        Account updatedAccount = account.toBuilder()
+                .currency("EUR")
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        AccountResponse updatedResponse = accountResponse.toBuilder()
+                .currency("EUR")
+                .build();
+
+        when(accountRepository.findById("6894577fb75681ff9f6f2729")).thenReturn(Optional.of(account));
+        when(accountMapper.updateEntity(account, updateRequest)).thenReturn(updatedAccount);
+        when(accountRepository.save(any(Account.class))).thenReturn(updatedAccount);
+        when(accountMapper.toResponse(updatedAccount)).thenReturn(updatedResponse);
+
+        // When
+        AccountResponse result = accountService.updateAccount("6894577fb75681ff9f6f2729", updateRequest);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getCurrency()).isEqualTo("EUR");
+        verify(accountRepository).findById("6894577fb75681ff9f6f2729");
+        verify(accountMapper).updateEntity(account, updateRequest);
+        verify(accountRepository).save(any(Account.class));
+        verify(accountMapper).toResponse(updatedAccount);
+    }
+
+    @Test
+    void updateAccount_ShouldUpdateStatusAndCurrency_WhenBothProvided() {
+        // Given
+        AccountUpdateRequest updateRequest = AccountUpdateRequest.builder()
+                .status(AccountStatus.INACTIVE)
+                .currency("GBP")
+                .build();
+
+        Account updatedAccount = account.toBuilder()
+                .status(AccountStatus.INACTIVE)
+                .currency("GBP")
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        AccountResponse updatedResponse = accountResponse.toBuilder()
+                .status(AccountStatus.INACTIVE)
+                .currency("GBP")
+                .build();
+
+        when(accountRepository.findById("6894577fb75681ff9f6f2729")).thenReturn(Optional.of(account));
+        when(accountMapper.updateEntity(account, updateRequest)).thenReturn(updatedAccount);
+        when(accountRepository.save(any(Account.class))).thenReturn(updatedAccount);
+        when(accountMapper.toResponse(updatedAccount)).thenReturn(updatedResponse);
+
+        // When
+        AccountResponse result = accountService.updateAccount("6894577fb75681ff9f6f2729", updateRequest);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getStatus()).isEqualTo(AccountStatus.INACTIVE);
+        assertThat(result.getCurrency()).isEqualTo("GBP");
+        verify(accountRepository).findById("6894577fb75681ff9f6f2729");
+        verify(accountMapper).updateEntity(account, updateRequest);
+        verify(accountRepository).save(any(Account.class));
+        verify(accountMapper).toResponse(updatedAccount);
+    }
+
+    @Test
     void updateAccount_ShouldThrowException_WhenAccountNotFound() {
         // Given
         AccountUpdateRequest updateRequest = AccountUpdateRequest.builder()

@@ -8,10 +8,12 @@ import com.banking.accountservice.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.banking.accountservice.service.CustomerService;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -31,6 +33,8 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"customers", "allCustomers", "customerExists", "customerExistsByEmail"}, allEntries = true)
     public Customer createCustomer(CustomerCreateRequest request) {
         log.debug("Creating new customer with email: {}", request.getEmail());
 
@@ -53,12 +57,21 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    @Cacheable(value = "customerExists", key = "#customerId")
     public boolean existsById(String customerId) {
         log.debug("Checking if customer exists with ID: {}", customerId);
         return customerRepository.existsById(customerId);
     }
 
     @Override
+    @Cacheable(value = "allCustomers")
+    public List<Customer> findAll() {
+        log.debug("Finding all customers");
+        return customerRepository.findAll();
+    }
+
+    @Override
+    @Cacheable(value = "customerExistsByEmail", key = "#email")
     public boolean existsByEmail(String email) {
         log.debug("Checking if customer exists with email: {}", email);
         return customerRepository.existsByEmail(email);

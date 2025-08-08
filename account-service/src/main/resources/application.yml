@@ -24,18 +24,28 @@ logging:
     org.springframework.data.mongodb: DEBUG
     org.springdoc: DEBUG
     org.springframework.web: DEBUG
+    org.springframework.cache: DEBUG
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{correlationId}] %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{correlationId:-}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{correlationId:-}] %logger{36} - %msg%n"
+  file:
+    name: logs/account-service.log
+    max-size: 10MB
+    max-history: 30
 
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,caches,cache
   endpoint:
     health:
       show-details: always
+    caches:
+      enabled: true
+    cache:
+      enabled: true
 
 springdoc:
   api-docs:

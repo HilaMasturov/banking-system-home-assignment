@@ -105,6 +105,7 @@ class TransactionServiceImplTest {
     void deposit_ShouldCreateDepositTransaction_WhenAccountExists() {
         // Given
         when(accountServiceClient.accountExists("account1")).thenReturn(true);
+        when(accountServiceClient.getAccountBalance("account1")).thenReturn(new BigDecimal("500.00"));
         when(transactionRepository.save(any(Transaction.class))).thenReturn(transaction);
         when(transactionMapper.toResponseDto(transaction)).thenReturn(transactionResponse);
 
@@ -118,6 +119,8 @@ class TransactionServiceImplTest {
         assertThat(result.getAmount()).isEqualByComparingTo(new BigDecimal("1000.00"));
 
         verify(accountServiceClient).accountExists("account1");
+        verify(accountServiceClient).getAccountBalance("account1");
+        verify(accountServiceClient).updateAccountBalance("account1", new BigDecimal("1500.00"));
         verify(transactionRepository).save(any(Transaction.class));
         verify(transactionMapper).toResponseDto(transaction);
     }
@@ -213,6 +216,7 @@ class TransactionServiceImplTest {
         when(accountServiceClient.accountExists("account1")).thenReturn(true);
         when(accountServiceClient.accountExists("account2")).thenReturn(true);
         when(accountServiceClient.getAccountBalance("account1")).thenReturn(new BigDecimal("1000.00"));
+        when(accountServiceClient.getAccountBalance("account2")).thenReturn(new BigDecimal("500.00"));
 
         Transaction transferTransaction = Transaction.builder()
                 .transactionId("txn3")
@@ -253,6 +257,9 @@ class TransactionServiceImplTest {
         verify(accountServiceClient).accountExists("account1");
         verify(accountServiceClient).accountExists("account2");
         verify(accountServiceClient).getAccountBalance("account1");
+        verify(accountServiceClient).getAccountBalance("account2");
+        verify(accountServiceClient).updateAccountBalance("account1", new BigDecimal("700.00"));
+        verify(accountServiceClient).updateAccountBalance("account2", new BigDecimal("800.00"));
         verify(transactionRepository).save(any(Transaction.class));
     }
 
@@ -401,6 +408,7 @@ class TransactionServiceImplTest {
         // Given
         depositRequest.setDescription(null);
         when(accountServiceClient.accountExists("account1")).thenReturn(true);
+        when(accountServiceClient.getAccountBalance("account1")).thenReturn(new BigDecimal("500.00"));
         when(transactionRepository.save(any(Transaction.class))).thenReturn(transaction);
         when(transactionMapper.toResponseDto(transaction)).thenReturn(transactionResponse);
 
@@ -409,6 +417,9 @@ class TransactionServiceImplTest {
 
         // Then
         assertThat(result).isEqualTo(transactionResponse);
+        verify(accountServiceClient).accountExists("account1");
+        verify(accountServiceClient).getAccountBalance("account1");
+        verify(accountServiceClient).updateAccountBalance("account1", new BigDecimal("1500.00"));
         verify(transactionRepository).save(any(Transaction.class));
     }
 
@@ -435,5 +446,104 @@ class TransactionServiceImplTest {
         // When & Then - should succeed with exact balance
         TransactionResponseDto result = transactionService.withdraw(withdrawRequest);
         assertThat(result).isNotNull();
+    }
+
+    @Test
+    void deposit_ShouldHandleDifferentCurrencies() {
+        // Given
+        depositRequest.setCurrency("EUR");
+        depositRequest.setAmount(new BigDecimal("1000.00"));
+
+        when(accountServiceClient.accountExists("account1")).thenReturn(true);
+        when(accountServiceClient.getAccountBalance("account1")).thenReturn(new BigDecimal("500.00"));
+
+        Transaction eurTransaction = Transaction.builder()
+                .transactionId("txn-eur")
+                .toAccountId("account1")
+                .amount(new BigDecimal("1000.00"))
+                .currency("EUR")
+                .type(TransactionType.DEPOSIT)
+                .status(TransactionStatus.COMPLETED)
+                .description("EUR deposit")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(transactionRepository.save(any(Transaction.class))).thenReturn(eurTransaction);
+        when(transactionMapper.toResponseDto(any(Transaction.class))).thenReturn(transactionResponse);
+
+        // When
+        TransactionResponseDto result = transactionService.deposit(depositRequest);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(accountServiceClient).updateAccountBalance("account1", new BigDecimal("1500.00"));
+        verify(transactionRepository).save(any(Transaction.class));
+    }
+
+    @Test
+    void transfer_ShouldHandleDifferentCurrencies() {
+        // Given
+        transferRequest.setCurrency("GBP");
+        transferRequest.setAmount(new BigDecimal("300.00"));
+
+        when(accountServiceClient.accountExists("account1")).thenReturn(true);
+        when(accountServiceClient.accountExists("account2")).thenReturn(true);
+        when(accountServiceClient.getAccountBalance("account1")).thenReturn(new BigDecimal("1000.00"));
+        when(accountServiceClient.getAccountBalance("account2")).thenReturn(new BigDecimal("500.00"));
+
+        Transaction gbpTransaction = Transaction.builder()
+                .transactionId("txn-gbp")
+                .fromAccountId("account1")
+                .toAccountId("account2")
+                .amount(new BigDecimal("300.00"))
+                .currency("GBP")
+                .type(TransactionType.TRANSFER)
+                .status(TransactionStatus.COMPLETED)
+                .description("GBP transfer")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(transactionRepository.save(any(Transaction.class))).thenReturn(gbpTransaction);
+        when(transactionMapper.toResponseDto(any(Transaction.class))).thenReturn(transactionResponse);
+
+        // When
+        TransactionResponseDto result = transactionService.transfer(transferRequest);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(accountServiceClient).updateAccountBalance("account1", new BigDecimal("700.00"));
+        verify(accountServiceClient).updateAccountBalance("account2", new BigDecimal("800.00"));
+        verify(transactionRepository).save(any(Transaction.class));
+    }
+
+    @Test
+    void deposit_ShouldHandleZeroAmount() {
+        // Given
+        depositRequest.setAmount(BigDecimal.ZERO);
+
+        when(accountServiceClient.accountExists("account1")).thenReturn(true);
+        when(accountServiceClient.getAccountBalance("account1")).thenReturn(new BigDecimal("1000.00"));
+
+        Transaction zeroTransaction = Transaction.builder()
+                .transactionId("txn-zero")
+                .toAccountId("account1")
+                .amount(BigDecimal.ZERO)
+                .currency("USD")
+                .type(TransactionType.DEPOSIT)
+                .status(TransactionStatus.COMPLETED)
+                .description("Zero deposit")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(transactionRepository.save(any(Transaction.class))).thenReturn(zeroTransaction);
+        when(transactionMapper.toResponseDto(any(Transaction.class))).thenReturn(transactionResponse);
+
+        // When
+        TransactionResponseDto result = transactionService.deposit(depositRequest);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(accountServiceClient).updateAccountBalance("account1", new BigDecimal("1000.00"));
+        verify(transactionRepository).save(any(Transaction.class));
     }
 }

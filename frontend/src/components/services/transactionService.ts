@@ -105,7 +105,8 @@ export class TransactionService {
             page: page.toString(),
             size: size.toString(),
             sortBy,
-            sortDirection
+            sortDirection,
+            _t: Date.now().toString() // Cache busting parameter
         });
 
         return apiClient.get<Transaction[]>(`${this.baseUrl}/transactions/account/${accountId}?${params}`);
@@ -151,8 +152,18 @@ export class TransactionService {
         );
 
         const results = await Promise.all(promises);
-        return results
-            .flat()
+        
+        // Deduplicate transactions to avoid showing transfers twice
+        const allTransactions = results.flat();
+        const uniqueTransactions = allTransactions.reduce((acc, transaction) => {
+            // Use transactionId as the key to ensure uniqueness
+            if (!acc.some(t => t.transactionId === transaction.transactionId)) {
+                acc.push(transaction);
+            }
+            return acc;
+        }, [] as Transaction[]);
+        
+        return uniqueTransactions
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
             .slice(0, 100); // Limit to most recent 100 transactions
     }

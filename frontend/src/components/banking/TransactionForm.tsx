@@ -222,13 +222,6 @@ const TransactionForm = ({ accounts, onTransactionSubmit }: TransactionFormProps
 
     return (
         <Card className="shadow-card border-border/50">
-            <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                    <CreditCard className="w-5 h-5" />
-                    <span>New Transaction</span>
-                </CardTitle>
-            </CardHeader>
-
             <CardContent>
                 <Tabs defaultValue="deposit" className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
@@ -247,7 +240,7 @@ const TransactionForm = ({ accounts, onTransactionSubmit }: TransactionFormProps
                     </TabsList>
 
                     {/* Deposit Tab */}
-                    <TabsContent value="deposit" className="space-y-4">
+                    <TabsContent value="deposit" className="space-y-4 mt-6">
                         <form onSubmit={handleDeposit} className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="deposit-account">To Account</Label>
@@ -304,7 +297,7 @@ const TransactionForm = ({ accounts, onTransactionSubmit }: TransactionFormProps
                     </TabsContent>
 
                     {/* Withdraw Tab */}
-                    <TabsContent value="withdraw" className="space-y-4">
+                    <TabsContent value="withdraw" className="space-y-4 mt-6">
                         <form onSubmit={handleWithdraw} className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="withdraw-account">From Account</Label>
@@ -361,7 +354,7 @@ const TransactionForm = ({ accounts, onTransactionSubmit }: TransactionFormProps
                     </TabsContent>
 
                     {/* Transfer Tab */}
-                    <TabsContent value="transfer" className="space-y-4">
+                    <TabsContent value="transfer" className="space-y-4 mt-6">
                         <form onSubmit={handleTransfer} className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="transfer-from">From Account</Label>

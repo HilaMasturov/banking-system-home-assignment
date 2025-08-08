@@ -62,6 +62,10 @@ public class AccountMapper {
             builder.status(request.getStatus());
         }
 
+        if (request.getCurrency() != null) {
+            builder.currency(request.getCurrency());
+        }
+
         // Always update the updatedAt timestamp
         builder.updatedAt(LocalDateTime.now());
 

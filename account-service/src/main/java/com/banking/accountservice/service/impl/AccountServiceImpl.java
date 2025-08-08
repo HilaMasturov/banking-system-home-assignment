@@ -14,6 +14,7 @@ import com.banking.accountservice.util.AccountMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,8 @@ public class AccountServiceImpl implements AccountService {
     private final AccountMapper accountMapper;
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"accountExists"}, allEntries = true)
     public AccountResponse createAccount(AccountCreateRequest request) {
         log.info("Creating account for customer: {}", request.getCustomerId());
 
@@ -52,7 +55,6 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    @Cacheable(value = "accounts", key = "#accountId")
     public AccountResponse findById(String accountId) {
         log.info("Finding account by ID: {}", accountId);
 
@@ -63,7 +65,6 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    @Cacheable(value = "customerAccounts", key = "#customerId")
     public List<AccountResponse> findByCustomerId(String customerId) {
         log.info("Finding accounts for customer: {}", customerId);
 
@@ -75,6 +76,8 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"accountExists"}, key = "#accountId")
     public AccountResponse updateAccount(String accountId, AccountUpdateRequest request) {
         log.info("Updating account: {}", accountId);
 
@@ -93,7 +96,6 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    @Cacheable(value = "accountBalance", key = "#accountId")
     public BigDecimal getBalance(String accountId) {
         log.info("Getting balance for account: {}", accountId);
 
@@ -104,6 +106,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public void updateBalance(String accountId, BigDecimal newBalance) {
         log.info("Updating balance for account: {} to: {}", accountId, newBalance);
 
@@ -120,6 +123,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Cacheable(value = "accountExists", key = "#accountId")
     public boolean existsById(String accountId) {
         return accountRepository.existsById(accountId);
     }

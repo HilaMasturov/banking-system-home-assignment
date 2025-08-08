@@ -220,10 +220,8 @@ class TransactionControllerTest {
                         .param("sortBy", "createdAt")
                         .param("sortDir", "desc"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].transactionId").value("txn1"))
-                .andExpect(jsonPath("$.content[0].amount").value(1000.00))
-                .andExpect(jsonPath("$.totalElements").value(1))
-                .andExpect(jsonPath("$.size").value(1));
+                .andExpect(jsonPath("$[0].transactionId").value("txn1"))
+                .andExpect(jsonPath("$[0].amount").value(1000.00));
     }
 
     @Test
@@ -238,8 +236,7 @@ class TransactionControllerTest {
         // When & Then
         mockMvc.perform(get("/api/v1/transactions/account/{accountId}", accountId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isEmpty())
-                .andExpect(jsonPath("$.totalElements").value(0));
+                .andExpect(jsonPath("$").isEmpty());
     }
 
     @Test
@@ -328,4 +325,8 @@ class TransactionControllerTest {
                 .andExpect(jsonPath("$.error").value("Internal Server Error"))
                 .andExpect(jsonPath("$.status").value(500));
     }
+
+
+
+
 }

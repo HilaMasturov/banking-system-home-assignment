@@ -21,6 +21,7 @@ export interface CreateAccountRequest {
 
 export interface UpdateAccountRequest {
     status?: 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
+    currency?: string;
 }
 
 export interface AccountValidationResult {
