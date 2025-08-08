@@ -227,6 +227,72 @@ class AccountControllerTest {
     }
 
     @Test
+    void updateAccount_ShouldReturnUpdatedAccount_WhenUpdatingCurrency() throws Exception {
+        // Given
+        String accountId = "6894577fb75681ff9f6f2729";
+        AccountResponse updatedResponse = AccountResponse.builder()
+                .accountId(accountId)
+                .customerId("customer123")
+                .accountNumber("ACC123456789")
+                .accountType(AccountType.SAVINGS)
+                .balance(new BigDecimal("1000.00"))
+                .currency("EUR")
+                .status(AccountStatus.ACTIVE)
+                .createdAt(LocalDateTime.of(2025, 1, 15, 10, 30))
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        AccountUpdateRequest updateRequest = AccountUpdateRequest.builder()
+                .currency("EUR")
+                .build();
+
+        when(accountService.updateAccount(anyString(), any(AccountUpdateRequest.class)))
+                .thenReturn(updatedResponse);
+
+        // When & Then
+        mockMvc.perform(put("/api/v1/accounts/{accountId}", accountId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountId").value(accountId))
+                .andExpect(jsonPath("$.currency").value("EUR"));
+    }
+
+    @Test
+    void updateAccount_ShouldReturnUpdatedAccount_WhenUpdatingStatusAndCurrency() throws Exception {
+        // Given
+        String accountId = "6894577fb75681ff9f6f2729";
+        AccountResponse updatedResponse = AccountResponse.builder()
+                .accountId(accountId)
+                .customerId("customer123")
+                .accountNumber("ACC123456789")
+                .accountType(AccountType.SAVINGS)
+                .balance(new BigDecimal("1000.00"))
+                .currency("GBP")
+                .status(AccountStatus.INACTIVE)
+                .createdAt(LocalDateTime.of(2025, 1, 15, 10, 30))
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        AccountUpdateRequest updateRequest = AccountUpdateRequest.builder()
+                .status(AccountStatus.INACTIVE)
+                .currency("GBP")
+                .build();
+
+        when(accountService.updateAccount(anyString(), any(AccountUpdateRequest.class)))
+                .thenReturn(updatedResponse);
+
+        // When & Then
+        mockMvc.perform(put("/api/v1/accounts/{accountId}", accountId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountId").value(accountId))
+                .andExpect(jsonPath("$.status").value("INACTIVE"))
+                .andExpect(jsonPath("$.currency").value("GBP"));
+    }
+
+    @Test
     void updateAccount_ShouldReturnNotFound_WhenAccountNotExists() throws Exception {
         // Given
         String accountId = "nonexistent";

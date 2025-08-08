@@ -17,14 +17,18 @@ import com.banking.transactionservice.util.TransactionMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -38,6 +42,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"transactions", "transaction"}, allEntries = true)
     public TransactionResponseDto deposit(DepositRequestDto request) {
         log.info("Processing deposit for account: {}, amount: {}", request.getAccountId(), request.getAmount());
 
@@ -74,6 +79,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"transactions", "transaction"}, allEntries = true)
     public TransactionResponseDto withdraw(WithdrawRequestDto request) {
         log.info("Processing withdrawal for account: {}, amount: {}", request.getAccountId(), request.getAmount());
 
@@ -114,6 +120,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"transactions", "transaction"}, allEntries = true)
     public TransactionResponseDto transfer(TransferRequestDto request) {
         log.info("Processing transfer from account: {} to account: {}, amount: {}",
                 request.getFromAccountId(), request.getToAccountId(), request.getAmount());
@@ -168,12 +175,32 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    @Cacheable(value = "transactions", key = "#accountId + '_' + #pageable.pageNumber")
+    @Cacheable(value = "transactions", key = "#accountId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort")
     public Page<TransactionResponseDto> getTransactionsByAccountId(String accountId, Pageable pageable) {
         log.info("Fetching transactions for account: {}", accountId);
 
         Page<Transaction> transactions = transactionRepository.findByAccountId(accountId, pageable);
-        return transactions.map(transactionMapper::toResponseDto);
+        
+        // Deduplicate transactions to avoid showing transfers twice
+        List<Transaction> uniqueTransactions = transactions.getContent().stream()
+                .collect(Collectors.toMap(
+                    Transaction::getTransactionId,
+                    transaction -> transaction,
+                    (existing, replacement) -> existing // Keep the first occurrence
+                ))
+                .values()
+                .stream()
+                .sorted((t1, t2) -> t2.getCreatedAt().compareTo(t1.getCreatedAt())) // Sort by creation date descending
+                .collect(Collectors.toList());
+        
+        // Create a new Page with deduplicated content
+        Page<Transaction> deduplicatedPage = new PageImpl<>(
+            uniqueTransactions,
+            pageable,
+            uniqueTransactions.size() // Use actual size for count
+        );
+        
+        return deduplicatedPage.map(transactionMapper::toResponseDto);
     }
 
     @Override

@@ -31,7 +31,8 @@ const AccountManagement = ({ accounts, onAccountUpdated }: AccountManagementProp
     const [showAccountNumbers, setShowAccountNumbers] = useState<Record<string, boolean>>({});
 
     const [updateData, setUpdateData] = useState<UpdateAccountRequest>({
-        status: undefined
+        status: undefined,
+        currency: undefined
     });
 
     const filteredAccounts = accounts.filter(account =>
@@ -40,23 +41,27 @@ const AccountManagement = ({ accounts, onAccountUpdated }: AccountManagementProp
         account.status.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleEdit = (accountId: string, currentStatus: string) => {
+    const handleEdit = (accountId: string, account: Account) => {
         setEditingAccount(accountId);
         setUpdateData({
-            status: currentStatus as "ACTIVE" | "INACTIVE" | "BLOCKED"
+            status: account.status,
+            currency: account.currency
         });
     };
 
     const handleCancelEdit = () => {
         setEditingAccount(null);
-        setUpdateData({ status: undefined });
+        setUpdateData({ 
+            status: undefined,
+            currency: undefined
+        });
     };
 
     const handleUpdateAccount = async (accountId: string) => {
-        if (!updateData.status) {
+        if (!updateData.status && !updateData.currency) {
             toast({
                 title: "Validation Error",
-                description: "Please select a status",
+                description: "Please make at least one change",
                 variant: "destructive",
             });
             return;
@@ -75,7 +80,10 @@ const AccountManagement = ({ accounts, onAccountUpdated }: AccountManagementProp
             });
 
             setEditingAccount(null);
-            setUpdateData({ status: undefined });
+            setUpdateData({ 
+                status: undefined,
+                currency: undefined
+            });
             onAccountUpdated();
 
         } catch (error) {
@@ -213,7 +221,7 @@ const AccountManagement = ({ accounts, onAccountUpdated }: AccountManagementProp
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => handleEdit(account.accountId, account.status)}
+                                            onClick={() => handleEdit(account.accountId, account)}
                                         >
                                             <Edit className="w-4 h-4 mr-1" />
                                             Edit
@@ -227,9 +235,9 @@ const AccountManagement = ({ accounts, onAccountUpdated }: AccountManagementProp
                                 <div>
                                     <Label className="text-sm text-muted-foreground">Account Number</Label>
                                     <div className="flex items-center space-x-2">
-                    <span className="font-mono text-sm">
-                      {formatAccountNumber(account.accountNumber, showAccountNumbers[account.accountId])}
-                    </span>
+                                        <span className="font-mono text-sm">
+                                            {formatAccountNumber(account.accountNumber, showAccountNumbers[account.accountId])}
+                                        </span>
                                         <Button
                                             size="sm"
                                             variant="ghost"
@@ -253,54 +261,78 @@ const AccountManagement = ({ accounts, onAccountUpdated }: AccountManagementProp
                                     </p>
                                 </div>
 
+                                {/* Account Type */}
+                                <div>
+                                    <Label className="text-sm text-muted-foreground">Account Type</Label>
+                                    <p className="font-medium capitalize">{account.accountType.toLowerCase()}</p>
+                                </div>
+
                                 {/* Currency */}
                                 <div>
                                     <Label className="text-sm text-muted-foreground">Currency</Label>
-                                    <p className="font-medium">{account.currency}</p>
-                                </div>
-
-                                {/* Status Update */}
-                                <div>
-                                    <Label className="text-sm text-muted-foreground">Account Status</Label>
                                     {editingAccount === account.accountId ? (
                                         <Select
-                                            value={updateData.status || ""}
-                                            onValueChange={(value: "ACTIVE" | "INACTIVE" | "BLOCKED") =>
-                                                setUpdateData({...updateData, status: value})}
+                                            value={updateData.currency || ""}
+                                            onValueChange={(value) =>
+                                                setUpdateData({...updateData, currency: value})}
                                         >
                                             <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select status" />
+                                                <SelectValue placeholder="Select currency" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="ACTIVE">
-                                                    <div className="flex items-center space-x-2">
-                                                        <CheckCircle className="w-4 h-4 text-green-500" />
-                                                        <span>Active</span>
-                                                    </div>
-                                                </SelectItem>
-                                                <SelectItem value="INACTIVE">
-                                                    <div className="flex items-center space-x-2">
-                                                        <Clock className="w-4 h-4 text-yellow-500" />
-                                                        <span>Inactive</span>
-                                                    </div>
-                                                </SelectItem>
-                                                <SelectItem value="BLOCKED">
-                                                    <div className="flex items-center space-x-2">
-                                                        <XCircle className="w-4 h-4 text-red-500" />
-                                                        <span>Blocked</span>
-                                                    </div>
-                                                </SelectItem>
+                                                <SelectItem value="USD">USD</SelectItem>
+                                                <SelectItem value="EUR">EUR</SelectItem>
+                                                <SelectItem value="GBP">GBP</SelectItem>
+                                                <SelectItem value="JPY">JPY</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     ) : (
-                                        <div className="flex items-center space-x-2">
-                                            {getStatusIcon(account.status)}
-                                            <span className="font-medium capitalize">
-                        {account.status.toLowerCase()}
-                      </span>
-                                        </div>
+                                        <p className="font-medium">{account.currency}</p>
                                     )}
                                 </div>
+                            </div>
+
+                            {/* Status Row */}
+                            <div className="mt-4">
+                                <Label className="text-sm text-muted-foreground">Account Status</Label>
+                                {editingAccount === account.accountId ? (
+                                    <Select
+                                        value={updateData.status || ""}
+                                        onValueChange={(value: "ACTIVE" | "INACTIVE" | "BLOCKED") =>
+                                            setUpdateData({...updateData, status: value})}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="ACTIVE">
+                                                <div className="flex items-center space-x-2">
+                                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                                    <span>Active</span>
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="INACTIVE">
+                                                <div className="flex items-center space-x-2">
+                                                    <Clock className="w-4 h-4 text-yellow-500" />
+                                                    <span>Inactive</span>
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="BLOCKED">
+                                                <div className="flex items-center space-x-2">
+                                                    <XCircle className="w-4 h-4 text-red-500" />
+                                                    <span>Blocked</span>
+                                                </div>
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <div className="flex items-center space-x-2 mt-1">
+                                        {getStatusIcon(account.status)}
+                                        <span className="font-medium capitalize">
+                                            {account.status.toLowerCase()}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Dates */}

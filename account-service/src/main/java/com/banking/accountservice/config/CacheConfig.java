@@ -11,12 +11,14 @@ import java.time.Duration;
 @Configuration
 public class CacheConfig {
 
-    @Bean
-    public CacheManager cacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager("accounts", "customers");
-        cacheManager.setCaffeine(caffeineCacheBuilder());
-        return cacheManager;
-    }
+                    @Bean
+                public CacheManager cacheManager() {
+                    CaffeineCacheManager cacheManager = new CaffeineCacheManager(
+                        "customers", "accountExists", "customerExists", "allCustomers", "customerExistsByEmail"
+                    );
+                    cacheManager.setCaffeine(caffeineCacheBuilder());
+                    return cacheManager;
+                }
 
     private Caffeine<Object, Object> caffeineCacheBuilder() {
         return Caffeine.newBuilder()

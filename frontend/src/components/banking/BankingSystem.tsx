@@ -1,4 +1,4 @@
-// src/components/BankingSystem.tsx (Updated with new features)
+// src/components/BankingSystem.tsx (Updated with customer management)
 import { useState, useEffect } from "react";
 import Header from "./Header";
 import AccountCard from "./AccountCard";
@@ -6,6 +6,7 @@ import TransactionList from "./TransactionList";
 import TransactionForm from "./TransactionForm";
 import CreateAccountForm from "./CreateAccountForm";
 import AccountManagement from "./AccountManagement";
+import CustomerManagement from "./CustomerManagement";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useToast } from "../../hooks/use-toast.ts";
 import {
@@ -15,12 +16,14 @@ import {
     AlertCircle,
     TrendingUp,
     DollarSign,
-    Settings
+    Settings,
+    Users
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { accountService, Account } from "../services/accountService";
 import { transactionService, Transaction } from "../services/transactionService";
+import { Customer } from "../services/customerService";
 
 const BankingSystem = () => {
     const { toast } = useToast();
@@ -30,12 +33,17 @@ const BankingSystem = () => {
     const [error, setError] = useState<string | null>(null);
     const [refreshing, setRefreshing] = useState(false);
     const [activeTab, setActiveTab] = useState("dashboard");
-
-    // For demo purposes, using a fixed customer ID
-    // In a real app, this would come from authentication
-    const CUSTOMER_ID = "customer1";
+    const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(null);
 
     const loadData = async (showRefreshing = false) => {
+        if (!currentCustomer) {
+            setAccounts([]);
+            setTransactions([]);
+            setLoading(false);
+            setRefreshing(false);
+            return;
+        }
+
         if (showRefreshing) {
             setRefreshing(true);
         } else {
@@ -44,11 +52,12 @@ const BankingSystem = () => {
         setError(null);
 
         try {
-            console.log('🔄 Loading banking data...');
+            console.log('🔄 Loading banking data for customer:', currentCustomer.customerId);
 
             // Load accounts first
-            const accountsData = await accountService.getAccountsByCustomer(CUSTOMER_ID);
+            const accountsData = await accountService.getAccountsByCustomer(currentCustomer.customerId);
             console.log('📊 Loaded accounts:', accountsData);
+            console.log('💰 Account balances:', accountsData.map(acc => `${acc.accountId}: ${acc.balance} ${acc.currency}`));
             setAccounts(accountsData);
 
             // Load transactions for all accounts
@@ -81,7 +90,7 @@ const BankingSystem = () => {
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [currentCustomer]);
 
     const handleTransactionSubmit = async (transactionData: any) => {
         console.log('💳 Submitting transaction:', transactionData);
@@ -127,8 +136,15 @@ const BankingSystem = () => {
 
             console.log('✅ Transaction completed:', newTransaction);
 
+            // Add a small delay to ensure backend processing is complete
+            await new Promise(resolve => setTimeout(resolve, 500));
+
             // Refresh data to get updated balances and transaction history
             await loadData(true);
+
+            // Debug: Log the updated accounts to see if balances changed
+            console.log('🔄 After transaction - Updated accounts:', accounts);
+            console.log('💰 Current balances by currency:', balancesByCurrency);
 
             toast({
                 title: "Transaction Successful",
@@ -160,8 +176,13 @@ const BankingSystem = () => {
         loadData(true);
     };
 
+    const handleTransactionClick = async (transaction: Transaction) => {
+        // This handler is now handled by the inline expansion in TransactionList
+        // The actual API call and state management is handled within the component
+        console.log('🔍 Transaction clicked:', transaction.transactionId);
+    };
+
     // Calculate statistics
-    const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
     const activeAccounts = accounts.filter(account => account.status === 'ACTIVE');
     const recentTransactions = transactions.filter(transaction => {
         const transactionDate = new Date(transaction.createdAt);
@@ -169,6 +190,24 @@ const BankingSystem = () => {
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
         return transactionDate >= oneWeekAgo;
     });
+
+    // Calculate balances by currency
+    const balancesByCurrency = accounts.reduce((acc, account) => {
+        const currency = account.currency;
+        if (!acc[currency]) {
+            acc[currency] = 0;
+        }
+        acc[currency] += account.balance;
+        return acc;
+    }, {} as Record<string, number>);
+
+    // Format currency balances
+    const formatCurrencyBalance = (amount: number, currency: string) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: currency,
+        }).format(amount);
+    };
 
     if (loading) {
         return (
@@ -179,6 +218,24 @@ const BankingSystem = () => {
                         <RefreshCw className="w-8 h-8 animate-spin mr-2" />
                         <span>Loading your banking information...</span>
                     </div>
+                </main>
+            </div>
+        );
+    }
+
+    // If no customer is selected, show customer selection
+    if (!currentCustomer) {
+        return (
+            <div className="min-h-screen bg-background">
+                <Header />
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <div className="flex justify-between items-center mb-8">
+                        <h1 className="text-3xl font-bold text-foreground">Banking Portal</h1>
+                    </div>
+                    <CustomerManagement
+                        currentCustomer={currentCustomer}
+                        onCustomerChange={setCurrentCustomer}
+                    />
                 </main>
             </div>
         );
@@ -211,19 +268,7 @@ const BankingSystem = () => {
         <div className="min-h-screen bg-background">
             <Header />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold text-foreground">Banking Portal</h1>
-                    <Button
-                        onClick={handleRefresh}
-                        variant="outline"
-                        disabled={refreshing}
-                    >
-                        <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-                        {refreshing ? 'Refreshing...' : 'Refresh'}
-                    </Button>
-                </div>
-
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="grid w-full grid-cols-5">
                         <TabsTrigger value="dashboard" className="flex items-center space-x-2">
@@ -238,6 +283,10 @@ const BankingSystem = () => {
                             <Receipt className="w-4 h-4" />
                             <span>Transactions</span>
                         </TabsTrigger>
+                        <TabsTrigger value="customers" className="flex items-center space-x-2">
+                            <Users className="w-4 h-4" />
+                            <span>Customers</span>
+                        </TabsTrigger>
                         <TabsTrigger value="manage" className="flex items-center space-x-2">
                             <Settings className="w-4 h-4" />
                             <span>Manage</span>
@@ -245,7 +294,7 @@ const BankingSystem = () => {
                     </TabsList>
 
                     {/* Dashboard Tab */}
-                    <TabsContent value="dashboard" className="space-y-6">
+                    <TabsContent value="dashboard" className="space-y-6 mt-8">
                         {/* Summary Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <Card>
@@ -254,7 +303,18 @@ const BankingSystem = () => {
                                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                                         <div className="ml-2">
                                             <p className="text-sm font-medium text-muted-foreground">Total Balance</p>
-                                            <p className="text-2xl font-bold">${totalBalance.toFixed(2)}</p>
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                {Object.entries(balancesByCurrency).map(([currency, amount]) => (
+                                                    <span key={currency} className="text-lg font-semibold">
+                                                        {formatCurrencyBalance(amount, currency)}
+                                                    </span>
+                                                ))}
+                                                {Object.keys(balancesByCurrency).length === 0 && (
+                                                    <span className="text-lg font-semibold text-muted-foreground">
+                                                        No accounts
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -338,7 +398,14 @@ const BankingSystem = () => {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <TransactionList transactions={transactions.slice(0, 5)} />
+                                    <TransactionList 
+                                        transactions={transactions.slice(0, 5)} 
+                                        onTransactionClick={handleTransactionClick}
+                                        accounts={accounts.map(acc => ({
+                                            accountId: acc.accountId,
+                                            accountNumber: acc.accountNumber
+                                        }))}
+                                    />
                                     {transactions.length > 5 && (
                                         <Button
                                             variant="outline"
@@ -354,21 +421,13 @@ const BankingSystem = () => {
                     </TabsContent>
 
                     {/* Accounts Tab */}
-                    <TabsContent value="accounts" className="space-y-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <TabsContent value="accounts" className="space-y-6 mt-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
                             {/* Create Account */}
                             <CreateAccountForm
-                                customerId={CUSTOMER_ID}
+                                customerId={currentCustomer?.customerId || ""}
                                 onAccountCreated={handleAccountCreated}
                             />
-
-                            {/* Transaction Form */}
-                            {accounts.length > 0 && (
-                                <TransactionForm
-                                    accounts={accounts}
-                                    onTransactionSubmit={handleTransactionSubmit}
-                                />
-                            )}
                         </div>
 
                         {/* All Accounts */}
@@ -395,25 +454,60 @@ const BankingSystem = () => {
                     </TabsContent>
 
                     {/* Transactions Tab */}
-                    <TabsContent value="transactions" className="space-y-6">
+                    <TabsContent value="transactions" className="space-y-6 mt-8">
+                        {/* Transaction Form */}
+                        {accounts.length > 0 && (
+                            <Card className="shadow-card border-border/50">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center space-x-2">
+                                        <Receipt className="w-5 h-5" />
+                                        <span>New Transaction</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <TransactionForm
+                                        accounts={accounts}
+                                        onTransactionSubmit={handleTransactionSubmit}
+                                    />
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* All Transactions */}
                         <Card className="shadow-card border-border/50">
                             <CardHeader>
                                 <CardTitle className="flex items-center space-x-2">
                                     <Receipt className="w-5 h-5" />
                                     <span>All Transactions</span>
                                     <span className="text-sm text-muted-foreground ml-auto">
-                    ({transactions.length} transactions)
-                  </span>
+                                        ({transactions.length} transactions)
+                                    </span>
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <TransactionList transactions={transactions} />
+                                <TransactionList 
+                                    transactions={transactions} 
+                                    onTransactionClick={handleTransactionClick}
+                                    accounts={accounts.map(acc => ({
+                                        accountId: acc.accountId,
+                                        accountNumber: acc.accountNumber
+                                    }))}
+                                />
                             </CardContent>
                         </Card>
                     </TabsContent>
 
+                    {/* Customers Tab */}
+                    <TabsContent value="customers" className="space-y-6 mt-8">
+                        <CustomerManagement
+                            currentCustomer={currentCustomer}
+                            onCustomerChange={setCurrentCustomer}
+                            showCustomerSelection={true}
+                        />
+                    </TabsContent>
+
                     {/* Manage Tab */}
-                    <TabsContent value="manage" className="space-y-6">
+                    <TabsContent value="manage" className="space-y-6 mt-8">
                         <AccountManagement
                             accounts={accounts}
                             onAccountUpdated={handleAccountUpdated}
