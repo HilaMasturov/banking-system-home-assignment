@@ -1,8 +1,11 @@
+// src/components/BankingSystem.tsx (Updated with new features)
 import { useState, useEffect } from "react";
 import Header from "./Header";
 import AccountCard from "./AccountCard";
 import TransactionList from "./TransactionList";
 import TransactionForm from "./TransactionForm";
+import CreateAccountForm from "./CreateAccountForm";
+import AccountManagement from "./AccountManagement";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useToast } from "../../hooks/use-toast.ts";
 import {
@@ -11,9 +14,11 @@ import {
     RefreshCw,
     AlertCircle,
     TrendingUp,
-    DollarSign
+    DollarSign,
+    Settings
 } from "lucide-react";
 import { Button } from "../ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { accountService, Account } from "../services/accountService";
 import { transactionService, Transaction } from "../services/transactionService";
 
@@ -24,10 +29,11 @@ const BankingSystem = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshing, setRefreshing] = useState(false);
+    const [activeTab, setActiveTab] = useState("dashboard");
 
     // For demo purposes, using a fixed customer ID
     // In a real app, this would come from authentication
-    const CUSTOMER_ID = "customer123";
+    const CUSTOMER_ID = "customer1";
 
     const loadData = async (showRefreshing = false) => {
         if (showRefreshing) {
@@ -136,21 +142,27 @@ const BankingSystem = () => {
                 description: errorMessage,
                 variant: "destructive",
             });
-            throw error; // Re-throw to let the form handle loading states
+            throw error;
         }
+    };
+
+    const handleAccountCreated = () => {
+        console.log('🎉 Account created, refreshing data...');
+        loadData(true);
+    };
+
+    const handleAccountUpdated = () => {
+        console.log('⚙️ Account updated, refreshing data...');
+        loadData(true);
     };
 
     const handleRefresh = () => {
         loadData(true);
     };
 
-    // Calculate total balance across all accounts
+    // Calculate statistics
     const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
-
-    // Count active accounts
     const activeAccounts = accounts.filter(account => account.status === 'ACTIVE');
-
-    // Count recent transactions (last 7 days)
     const recentTransactions = transactions.filter(transaction => {
         const transactionDate = new Date(transaction.createdAt);
         const oneWeekAgo = new Date();
@@ -201,7 +213,7 @@ const BankingSystem = () => {
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold text-foreground">Banking Dashboard</h1>
+                    <h1 className="text-3xl font-bold text-foreground">Banking Portal</h1>
                     <Button
                         onClick={handleRefresh}
                         variant="outline"
@@ -212,93 +224,183 @@ const BankingSystem = () => {
                     </Button>
                 </div>
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <Card>
-                        <CardContent className="pt-6">
-                            <div className="flex items-center">
-                                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-muted-foreground">Total Balance</p>
-                                    <p className="text-2xl font-bold">${totalBalance.toFixed(2)}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-5">
+                        <TabsTrigger value="dashboard" className="flex items-center space-x-2">
+                            <TrendingUp className="w-4 h-4" />
+                            <span>Dashboard</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="accounts" className="flex items-center space-x-2">
+                            <CreditCard className="w-4 h-4" />
+                            <span>Accounts</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="transactions" className="flex items-center space-x-2">
+                            <Receipt className="w-4 h-4" />
+                            <span>Transactions</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="manage" className="flex items-center space-x-2">
+                            <Settings className="w-4 h-4" />
+                            <span>Manage</span>
+                        </TabsTrigger>
+                    </TabsList>
 
-                    <Card>
-                        <CardContent className="pt-6">
-                            <div className="flex items-center">
-                                <CreditCard className="h-4 w-4 text-muted-foreground" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-muted-foreground">Active Accounts</p>
-                                    <p className="text-2xl font-bold">{activeAccounts.length}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* Dashboard Tab */}
+                    <TabsContent value="dashboard" className="space-y-6">
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <Card>
+                                <CardContent className="pt-6">
+                                    <div className="flex items-center">
+                                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                        <div className="ml-2">
+                                            <p className="text-sm font-medium text-muted-foreground">Total Balance</p>
+                                            <p className="text-2xl font-bold">${totalBalance.toFixed(2)}</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                    <Card>
-                        <CardContent className="pt-6">
-                            <div className="flex items-center">
-                                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-muted-foreground">Recent Transactions</p>
-                                    <p className="text-2xl font-bold">{recentTransactions.length}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                            <Card>
+                                <CardContent className="pt-6">
+                                    <div className="flex items-center">
+                                        <CreditCard className="h-4 w-4 text-muted-foreground" />
+                                        <div className="ml-2">
+                                            <p className="text-sm font-medium text-muted-foreground">Active Accounts</p>
+                                            <p className="text-2xl font-bold">{activeAccounts.length}</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Left Column - Accounts and Transaction Form */}
-                    <div className="space-y-6">
-                        {/* Accounts Section */}
+                            <Card>
+                                <CardContent className="pt-6">
+                                    <div className="flex items-center">
+                                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                                        <div className="ml-2">
+                                            <p className="text-sm font-medium text-muted-foreground">Recent Transactions</p>
+                                            <p className="text-2xl font-bold">{recentTransactions.length}</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Accounts Overview */}
+                            <Card className="shadow-card border-border/50">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center space-x-2">
+                                        <CreditCard className="w-5 h-5" />
+                                        <span>My Accounts</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {accounts.length === 0 ? (
+                                        <div className="text-center py-8 text-muted-foreground">
+                                            <CreditCard className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                            <p>No accounts found</p>
+                                        </div>
+                                    ) : (
+                                        accounts.slice(0, 3).map((account) => (
+                                            <AccountCard
+                                                key={account.accountId}
+                                                accountNumber={account.accountNumber}
+                                                accountType={account.accountType}
+                                                balance={account.balance}
+                                                currency={account.currency}
+                                                status={account.status}
+                                            />
+                                        ))
+                                    )}
+                                    {accounts.length > 3 && (
+                                        <Button
+                                            variant="outline"
+                                            className="w-full"
+                                            onClick={() => setActiveTab("accounts")}
+                                        >
+                                            View All Accounts ({accounts.length})
+                                        </Button>
+                                    )}
+                                </CardContent>
+                            </Card>
+
+                            {/* Recent Transactions */}
+                            <Card className="shadow-card border-border/50">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-2">
+                                            <Receipt className="w-5 h-5" />
+                                            <span>Recent Activity</span>
+                                        </div>
+                                        <span className="text-sm text-muted-foreground">
+                      ({transactions.length} total)
+                    </span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <TransactionList transactions={transactions.slice(0, 5)} />
+                                    {transactions.length > 5 && (
+                                        <Button
+                                            variant="outline"
+                                            className="w-full mt-4"
+                                            onClick={() => setActiveTab("transactions")}
+                                        >
+                                            View All Transactions
+                                        </Button>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </TabsContent>
+
+                    {/* Accounts Tab */}
+                    <TabsContent value="accounts" className="space-y-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Create Account */}
+                            <CreateAccountForm
+                                customerId={CUSTOMER_ID}
+                                onAccountCreated={handleAccountCreated}
+                            />
+
+                            {/* Transaction Form */}
+                            {accounts.length > 0 && (
+                                <TransactionForm
+                                    accounts={accounts}
+                                    onTransactionSubmit={handleTransactionSubmit}
+                                />
+                            )}
+                        </div>
+
+                        {/* All Accounts */}
                         <Card className="shadow-card border-border/50">
                             <CardHeader>
                                 <CardTitle className="flex items-center space-x-2">
                                     <CreditCard className="w-5 h-5" />
-                                    <span>Account Management</span>
+                                    <span>All Accounts</span>
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                {accounts.length === 0 ? (
-                                    <div className="text-center py-8 text-muted-foreground">
-                                        <CreditCard className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                                        <p>No accounts found</p>
-                                    </div>
-                                ) : (
-                                    accounts.map((account) => (
-                                        <AccountCard
-                                            key={account.accountId}
-                                            accountNumber={account.accountNumber}
-                                            accountType={account.accountType}
-                                            balance={account.balance}
-                                            currency={account.currency}
-                                            status={account.status}
-                                        />
-                                    ))
-                                )}
+                                {accounts.map((account) => (
+                                    <AccountCard
+                                        key={account.accountId}
+                                        accountNumber={account.accountNumber}
+                                        accountType={account.accountType}
+                                        balance={account.balance}
+                                        currency={account.currency}
+                                        status={account.status}
+                                    />
+                                ))}
                             </CardContent>
                         </Card>
+                    </TabsContent>
 
-                        {/* Transaction Form - Only show if accounts exist */}
-                        {accounts.length > 0 && (
-                            <TransactionForm
-                                accounts={accounts}
-                                onTransactionSubmit={handleTransactionSubmit}
-                            />
-                        )}
-                    </div>
-
-                    {/* Right Column - Transaction History */}
-                    <div>
+                    {/* Transactions Tab */}
+                    <TabsContent value="transactions" className="space-y-6">
                         <Card className="shadow-card border-border/50">
                             <CardHeader>
                                 <CardTitle className="flex items-center space-x-2">
                                     <Receipt className="w-5 h-5" />
-                                    <span>Transaction History</span>
+                                    <span>All Transactions</span>
                                     <span className="text-sm text-muted-foreground ml-auto">
                     ({transactions.length} transactions)
                   </span>
@@ -308,8 +410,16 @@ const BankingSystem = () => {
                                 <TransactionList transactions={transactions} />
                             </CardContent>
                         </Card>
-                    </div>
-                </div>
+                    </TabsContent>
+
+                    {/* Manage Tab */}
+                    <TabsContent value="manage" className="space-y-6">
+                        <AccountManagement
+                            accounts={accounts}
+                            onAccountUpdated={handleAccountUpdated}
+                        />
+                    </TabsContent>
+                </Tabs>
             </main>
         </div>
     );

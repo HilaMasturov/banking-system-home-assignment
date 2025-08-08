@@ -80,10 +80,8 @@ public class AccountController {
     public ResponseEntity<Map<String, Object>> getAccountBalance(
             @Parameter(description = "Account ID") @PathVariable String accountId) {
         log.info("Retrieving balance for account: {}", accountId);
-        BigDecimal balance = accountService.getBalance(accountId);
-
-        // Get account details to include currency information
         AccountResponse account = accountService.findById(accountId);
+        BigDecimal balance = accountService.getBalance(accountId);
 
         Map<String, Object> balanceResponse = Map.of(
                 "balance", balance,

@@ -20,6 +20,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -28,6 +29,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
@@ -35,6 +37,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionMapper transactionMapper;
 
     @Override
+    @Transactional
     public TransactionResponseDto deposit(DepositRequestDto request) {
         log.info("Processing deposit for account: {}, amount: {}", request.getAccountId(), request.getAmount());
 
@@ -42,6 +45,10 @@ public class TransactionServiceImpl implements TransactionService {
         if (!accountServiceClient.accountExists(request.getAccountId())) {
             throw new AccountNotFoundException("Account not found: " + request.getAccountId());
         }
+
+        // Get current balance and calculate new balance
+        BigDecimal currentBalance = accountServiceClient.getAccountBalance(request.getAccountId());
+        BigDecimal newBalance = currentBalance.add(request.getAmount());
 
         Transaction transaction = Transaction.builder()
                 .transactionId(UUID.randomUUID().toString())
@@ -55,12 +62,18 @@ public class TransactionServiceImpl implements TransactionService {
                 .build();
 
         Transaction savedTransaction = transactionRepository.save(transaction);
-        log.info("Deposit completed for transaction: {}", savedTransaction.getTransactionId());
+        
+        // Update account balance
+        accountServiceClient.updateAccountBalance(request.getAccountId(), newBalance);
+        
+        log.info("Deposit completed for transaction: {} - Balance updated from {} to {}", 
+                savedTransaction.getTransactionId(), currentBalance, newBalance);
 
         return transactionMapper.toResponseDto(savedTransaction);
     }
 
     @Override
+    @Transactional
     public TransactionResponseDto withdraw(WithdrawRequestDto request) {
         log.info("Processing withdrawal for account: {}, amount: {}", request.getAccountId(), request.getAmount());
 
@@ -69,11 +82,13 @@ public class TransactionServiceImpl implements TransactionService {
             throw new AccountNotFoundException("Account not found: " + request.getAccountId());
         }
 
-        // Check balance (simplified - in real implementation, this would be handled by Account Service)
+        // Check balance and calculate new balance
         BigDecimal currentBalance = accountServiceClient.getAccountBalance(request.getAccountId());
         if (currentBalance.compareTo(request.getAmount()) < 0) {
             throw new InsufficientFundsException("Insufficient funds for withdrawal");
         }
+
+        BigDecimal newBalance = currentBalance.subtract(request.getAmount());
 
         Transaction transaction = Transaction.builder()
                 .transactionId(UUID.randomUUID().toString())
@@ -87,12 +102,18 @@ public class TransactionServiceImpl implements TransactionService {
                 .build();
 
         Transaction savedTransaction = transactionRepository.save(transaction);
-        log.info("Withdrawal completed for transaction: {}", savedTransaction.getTransactionId());
+        
+        // Update account balance
+        accountServiceClient.updateAccountBalance(request.getAccountId(), newBalance);
+        
+        log.info("Withdrawal completed for transaction: {} - Balance updated from {} to {}", 
+                savedTransaction.getTransactionId(), currentBalance, newBalance);
 
         return transactionMapper.toResponseDto(savedTransaction);
     }
 
     @Override
+    @Transactional
     public TransactionResponseDto transfer(TransferRequestDto request) {
         log.info("Processing transfer from account: {} to account: {}, amount: {}",
                 request.getFromAccountId(), request.getToAccountId(), request.getAmount());
@@ -111,11 +132,16 @@ public class TransactionServiceImpl implements TransactionService {
             throw new AccountNotFoundException("To account not found: " + request.getToAccountId());
         }
 
-        // Check balance
-        BigDecimal currentBalance = accountServiceClient.getAccountBalance(request.getFromAccountId());
-        if (currentBalance.compareTo(request.getAmount()) < 0) {
+        // Check balance and calculate new balances
+        BigDecimal fromAccountBalance = accountServiceClient.getAccountBalance(request.getFromAccountId());
+        BigDecimal toAccountBalance = accountServiceClient.getAccountBalance(request.getToAccountId());
+        
+        if (fromAccountBalance.compareTo(request.getAmount()) < 0) {
             throw new InsufficientFundsException("Insufficient funds for transfer");
         }
+
+        BigDecimal newFromAccountBalance = fromAccountBalance.subtract(request.getAmount());
+        BigDecimal newToAccountBalance = toAccountBalance.add(request.getAmount());
 
         Transaction transaction = Transaction.builder()
                 .transactionId(UUID.randomUUID().toString())
@@ -130,7 +156,13 @@ public class TransactionServiceImpl implements TransactionService {
                 .build();
 
         Transaction savedTransaction = transactionRepository.save(transaction);
-        log.info("Transfer completed for transaction: {}", savedTransaction.getTransactionId());
+        
+        // Update both account balances
+        accountServiceClient.updateAccountBalance(request.getFromAccountId(), newFromAccountBalance);
+        accountServiceClient.updateAccountBalance(request.getToAccountId(), newToAccountBalance);
+        
+        log.info("Transfer completed for transaction: {} - From account balance updated from {} to {}, To account balance updated from {} to {}", 
+                savedTransaction.getTransactionId(), fromAccountBalance, newFromAccountBalance, toAccountBalance, newToAccountBalance);
 
         return transactionMapper.toResponseDto(savedTransaction);
     }

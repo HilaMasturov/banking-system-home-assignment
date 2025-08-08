@@ -5,8 +5,8 @@
 @layer base {
   :root {
     /* Core Banking Colors */
-    --background: 0 0% 100%;
-    --foreground: 218 11% 20%;
+      --background: 250, 247, 243;
+      --foreground: 218 11% 20%;
     
     /* Card System */
     --card: 0 0% 100%;
@@ -71,6 +71,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+      background-color: rgb(var(--background));
+      @apply text-foreground;
   }
 }

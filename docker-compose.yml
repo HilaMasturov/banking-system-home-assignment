@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=banking
+    networks:
+      - banking-network
+
+  account-service:
+    build: ./account-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/banking_accounts
+      - SERVER_PORT=8081
+    networks:
+      - banking-network
+    restart: unless-stopped
+
+  transaction-service:
+    build: ./transaction-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mongodb
+      - account-service
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/banking_transactions
+      - ACCOUNT_SERVICE_URL=http://account-service:8081
+      - SERVER_PORT=8082
+    networks:
+      - banking-network
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - account-service
+      - transaction-service
+    environment:
+      - REACT_APP_API_BASE_URL=http://localhost:8081
+      - REACT_APP_TRANSACTION_API_BASE_URL=http://localhost:8082
+    networks:
+      - banking-network
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+
+networks:
+  banking-network:
+    driver: bridge
