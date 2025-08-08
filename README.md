@@ -1,4 +1,4 @@
-# Banking System - Microservices Architecture
+# Banking System
 
 A modern banking system built with microservices architecture, featuring real-time transaction processing, customer management, and a responsive React frontend. The system demonstrates best practices in microservices design, caching strategies, and modern web development.
 
