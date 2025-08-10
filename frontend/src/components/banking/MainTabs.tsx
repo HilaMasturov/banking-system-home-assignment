@@ -26,7 +26,7 @@ interface MainTabsProps {
     currentCustomer: Customer | null;
     onTabChange: (tab: string) => void;
     onAccountSelectionChange: (viewMode: "all" | "specific", accountId?: string) => void;
-    onTransactionSubmit: (transactionData: any) => void;
+    onTransactionSubmit: (transactionData: any) => Promise<void>;
     onTransactionClick: (transaction: Transaction) => void;
     onPageChange: (page: number) => void;
     onPageSizeChange: (pageSize: number) => void;

@@ -154,8 +154,8 @@ export class TransactionService {
 
         try {
             // Fetch transactions from all accounts using the paginated endpoint
-            // We need to fetch more data to account for potential duplicates across accounts
-            const fetchSize = Math.max(size * 3, 100); // Fetch more to account for deduplication
+            // Use a much larger fetch size to ensure we capture all transactions
+            const fetchSize = Math.max(size * 10, 1000); // Fetch much more to account for deduplication
             const promises = accountIds.map(accountId =>
                 this.getTransactionHistory(accountId, { 
                     page: 0, // Always fetch from first page for aggregation
@@ -163,6 +163,7 @@ export class TransactionService {
                     sortBy,
                     sortDirection
                 }).catch((error) => {
+                    console.warn(`Failed to fetch transactions for account ${accountId}:`, error);
                     return { content: [], totalElements: 0 } as PaginatedTransactionResponse;
                 })
             );
@@ -214,6 +215,7 @@ export class TransactionService {
                 empty: paginatedContent.length === 0
             };
         } catch (error) {
+            console.error('Error fetching transactions for multiple accounts:', error);
             throw error;
         }
     }
