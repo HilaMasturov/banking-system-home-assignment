@@ -89,11 +89,11 @@ export class TransactionService {
         return apiClient.post<Transaction>(`${this.baseUrl}/transactions/transfer`, transferData);
     }
 
-    // GET /api/transactions/account/{accountId} - Get transaction history (returns List)
+    // GET /api/transactions/account/{accountId}/paginated - Get paginated transaction history
     async getTransactionHistory(
         accountId: string,
         options: TransactionHistoryOptions = {}
-    ): Promise<Transaction[]> {
+    ): Promise<PaginatedTransactionResponse> {
         const {
             page = 0,
             size = 20,
@@ -109,31 +109,7 @@ export class TransactionService {
             _t: Date.now().toString() // Cache busting parameter
         });
 
-        return apiClient.get<Transaction[]>(`${this.baseUrl}/transactions/account/${accountId}?${params}`);
-    }
-
-    // GET /api/transactions/account/{accountId}/paginated - Get paginated transaction history (returns Page)
-    async getPaginatedTransactionHistory(
-        accountId: string,
-        options: TransactionHistoryOptions = {}
-    ): Promise<PaginatedTransactionResponse> {
-        const {
-            page = 0,
-            size = 20,
-            sortBy = 'createdAt',
-            sortDirection = 'desc'
-        } = options;
-
-        const params = new URLSearchParams({
-            page: page.toString(),
-            size: size.toString(),
-            sortBy,
-            sortDirection
-        });
-
-        return apiClient.get<PaginatedTransactionResponse>(
-            `${this.baseUrl}/transactions/account/${accountId}/paginated?${params}`
-        );
+        return apiClient.get<PaginatedTransactionResponse>(`${this.baseUrl}/transactions/account/${accountId}/paginated?${params}`);
     }
 
     // GET /api/transactions/{transactionId} - Get transaction details
@@ -141,167 +117,105 @@ export class TransactionService {
         return apiClient.get<Transaction>(`${this.baseUrl}/transactions/${transactionId}`);
     }
 
-    // Helper methods for common operations
-    async getTransactionsForAccounts(accountIds: string[]): Promise<Transaction[]> {
-        const promises = accountIds.map(accountId =>
-            this.getTransactionHistory(accountId, { size: 50 })
-                .catch((error) => {
-                    console.warn(`Failed to fetch transactions for account ${accountId}:`, error);
-                    return [] as Transaction[];
+    // Get paginated transactions from multiple accounts
+    async getPaginatedTransactionsForAccounts(
+        accountIds: string[],
+        options: TransactionHistoryOptions = {}
+    ): Promise<PaginatedTransactionResponse> {
+        if (accountIds.length === 0) {
+            return {
+                content: [],
+                pageable: {
+                    sort: { empty: true, sorted: false, unsorted: true },
+                    offset: 0,
+                    pageSize: options.size || 20,
+                    pageNumber: options.page || 0,
+                    paged: true,
+                    unpaged: false
+                },
+                last: true,
+                totalPages: 0,
+                totalElements: 0,
+                size: options.size || 20,
+                number: options.page || 0,
+                sort: { empty: true, sorted: false, unsorted: true },
+                first: true,
+                numberOfElements: 0,
+                empty: true
+            };
+        }
+
+        const {
+            page = 0,
+            size = 20,
+            sortBy = 'createdAt',
+            sortDirection = 'desc'
+        } = options;
+
+        try {
+            // Fetch transactions from all accounts using the paginated endpoint
+            // We need to fetch more data to account for potential duplicates across accounts
+            const fetchSize = Math.max(size * 3, 100); // Fetch more to account for deduplication
+            const promises = accountIds.map(accountId =>
+                this.getTransactionHistory(accountId, { 
+                    page: 0, // Always fetch from first page for aggregation
+                    size: fetchSize,
+                    sortBy,
+                    sortDirection
+                }).catch((error) => {
+                    return { content: [], totalElements: 0 } as PaginatedTransactionResponse;
                 })
-        );
+            );
 
-        const results = await Promise.all(promises);
-        
-        // Deduplicate transactions to avoid showing transfers twice
-        const allTransactions = results.flat();
-        const uniqueTransactions = allTransactions.reduce((acc, transaction) => {
-            // Use transactionId as the key to ensure uniqueness
-            if (!acc.some(t => t.transactionId === transaction.transactionId)) {
-                acc.push(transaction);
-            }
-            return acc;
-        }, [] as Transaction[]);
-        
-        return uniqueTransactions
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .slice(0, 100); // Limit to most recent 100 transactions
-    }
-
-    async getRecentTransactions(accountId: string, limit: number = 10): Promise<Transaction[]> {
-        try {
-            return await this.getTransactionHistory(accountId, {
-                page: 0,
-                size: limit,
-                sortBy: 'createdAt',
-                sortDirection: 'desc'
+            const results = await Promise.all(promises);
+            
+            // Extract transactions and deduplicate
+            const allTransactions = results.flatMap(result => result.content);
+            const uniqueTransactions = allTransactions.reduce((acc, transaction) => {
+                // Use transactionId as the key to ensure uniqueness
+                if (!acc.some(t => t.transactionId === transaction.transactionId)) {
+                    acc.push(transaction);
+                }
+                return acc;
+            }, [] as Transaction[]);
+            
+            // Sort by creation date
+            const sortedTransactions = uniqueTransactions.sort((a, b) => {
+                const dateA = new Date(a.createdAt).getTime();
+                const dateB = new Date(b.createdAt).getTime();
+                return sortDirection === 'desc' ? dateB - dateA : dateA - dateB;
             });
+
+            // Apply pagination
+            const startIndex = page * size;
+            const endIndex = startIndex + size;
+            const paginatedContent = sortedTransactions.slice(startIndex, endIndex);
+            const totalElements = sortedTransactions.length;
+            const totalPages = Math.ceil(totalElements / size);
+
+            return {
+                content: paginatedContent,
+                pageable: {
+                    sort: { empty: false, sorted: true, unsorted: false },
+                    offset: startIndex,
+                    pageSize: size,
+                    pageNumber: page,
+                    paged: true,
+                    unpaged: false
+                },
+                last: page >= totalPages - 1,
+                totalPages,
+                totalElements,
+                size,
+                number: page,
+                sort: { empty: false, sorted: true, unsorted: false },
+                first: page === 0,
+                numberOfElements: paginatedContent.length,
+                empty: paginatedContent.length === 0
+            };
         } catch (error) {
-            console.error(`Failed to fetch recent transactions for account ${accountId}:`, error);
-            return [];
+            throw error;
         }
-    }
-
-    async checkTransactionStatus(transactionId: string): Promise<'PENDING' | 'COMPLETED' | 'FAILED' | null> {
-        try {
-            const transaction = await this.getTransaction(transactionId);
-            return transaction.status;
-        } catch (error) {
-            console.error(`Failed to check transaction status for ${transactionId}:`, error);
-            return null;
-        }
-    }
-
-    // Advanced filtering and searching
-    async getTransactionsByType(
-        accountId: string,
-        type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER',
-        options: TransactionHistoryOptions = {}
-    ): Promise<Transaction[]> {
-        const transactions = await this.getTransactionHistory(accountId, options);
-        return transactions.filter(transaction => transaction.type === type);
-    }
-
-    async getTransactionsByStatus(
-        accountId: string,
-        status: 'PENDING' | 'COMPLETED' | 'FAILED',
-        options: TransactionHistoryOptions = {}
-    ): Promise<Transaction[]> {
-        const transactions = await this.getTransactionHistory(accountId, options);
-        return transactions.filter(transaction => transaction.status === status);
-    }
-
-    async getTransactionsByDateRange(
-        accountId: string,
-        startDate: Date,
-        endDate: Date,
-        options: TransactionHistoryOptions = {}
-    ): Promise<Transaction[]> {
-        const transactions = await this.getTransactionHistory(accountId, options);
-        return transactions.filter(transaction => {
-            const transactionDate = new Date(transaction.createdAt);
-            return transactionDate >= startDate && transactionDate <= endDate;
-        });
-    }
-
-    async getTransactionsByAmountRange(
-        accountId: string,
-        minAmount: number,
-        maxAmount: number,
-        options: TransactionHistoryOptions = {}
-    ): Promise<Transaction[]> {
-        const transactions = await this.getTransactionHistory(accountId, options);
-        return transactions.filter(transaction =>
-            transaction.amount >= minAmount && transaction.amount <= maxAmount
-        );
-    }
-
-    // Statistics and analytics
-    async getTransactionStatistics(accountId: string): Promise<{
-        totalTransactions: number;
-        totalDeposits: number;
-        totalWithdrawals: number;
-        totalTransfers: number;
-        totalAmount: number;
-        averageAmount: number;
-        pendingTransactions: number;
-    }> {
-        const transactions = await this.getTransactionHistory(accountId, { size: 1000 });
-
-        const deposits = transactions.filter(t => t.type === 'DEPOSIT');
-        const withdrawals = transactions.filter(t => t.type === 'WITHDRAWAL');
-        const transfers = transactions.filter(t => t.type === 'TRANSFER');
-        const pending = transactions.filter(t => t.status === 'PENDING');
-
-        const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
-
-        return {
-            totalTransactions: transactions.length,
-            totalDeposits: deposits.length,
-            totalWithdrawals: withdrawals.length,
-            totalTransfers: transfers.length,
-            totalAmount,
-            averageAmount: transactions.length > 0 ? totalAmount / transactions.length : 0,
-            pendingTransactions: pending.length
-        };
-    }
-
-    // Bulk operations
-    async getMultipleTransactions(transactionIds: string[]): Promise<Map<string, Transaction | null>> {
-        const transactionPromises = transactionIds.map(async (transactionId) => {
-            try {
-                const transaction = await this.getTransaction(transactionId);
-                return { transactionId, transaction };
-            } catch (error) {
-                console.warn(`Failed to fetch transaction ${transactionId}:`, error);
-                return { transactionId, transaction: null };
-            }
-        });
-
-        const results = await Promise.all(transactionPromises);
-        const transactionMap = new Map<string, Transaction | null>();
-
-        results.forEach(({ transactionId, transaction }) => {
-            transactionMap.set(transactionId, transaction);
-        });
-
-        return transactionMap;
-    }
-
-    // Search functionality
-    async searchTransactions(
-        accountId: string,
-        searchTerm: string,
-        options: TransactionHistoryOptions = {}
-    ): Promise<Transaction[]> {
-        const transactions = await this.getTransactionHistory(accountId, options);
-        const searchLower = searchTerm.toLowerCase();
-
-        return transactions.filter(transaction =>
-            transaction.description.toLowerCase().includes(searchLower) ||
-            transaction.transactionId.toLowerCase().includes(searchLower) ||
-            transaction.amount.toString().includes(searchTerm)
-        );
     }
 }
 

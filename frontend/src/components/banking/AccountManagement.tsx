@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card.tsx";
+import { Button } from "../ui/button.tsx";
+import { Input } from "../ui/input.tsx";
+import { Label } from "../ui/label.tsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select.tsx";
+import { Badge } from "../ui/badge.tsx";
+import { useToast } from "../../hooks/use-toast.ts";
 import {
     Settings,
     Edit,
@@ -17,6 +17,7 @@ import {
     Clock
 } from "lucide-react";
 import { Account, accountService, UpdateAccountRequest } from "../services/accountService";
+import { maskAccountNumber } from "../../lib/accountUtils";
 
 interface AccountManagementProps {
     accounts: Account[];
@@ -70,9 +71,7 @@ const AccountManagement = ({ accounts, onAccountUpdated }: AccountManagementProp
         setLoading(true);
 
         try {
-            console.log('⚙️ Updating account:', accountId, updateData);
             await accountService.updateAccount(accountId, updateData);
-            console.log('✅ Account updated successfully');
 
             toast({
                 title: "Account Updated",
@@ -87,7 +86,6 @@ const AccountManagement = ({ accounts, onAccountUpdated }: AccountManagementProp
             onAccountUpdated();
 
         } catch (error) {
-            console.error('❌ Failed to update account:', error);
             const errorMessage = error instanceof Error ? error.message : 'Failed to update account';
             toast({
                 title: "Update Failed",
@@ -143,7 +141,7 @@ const AccountManagement = ({ accounts, onAccountUpdated }: AccountManagementProp
         if (show) {
             return accountNumber;
         }
-        return `****${accountNumber.slice(-4)}`;
+        return maskAccountNumber(accountNumber);
     };
 
     return (

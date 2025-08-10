@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
-import { Label } from "../ui/label";
 import { Badge } from "../ui/badge";
 import { useToast } from "../../hooks/use-toast";
+import { useAccountMasking } from "../../hooks/useAccountMasking";
 import {
     Receipt,
     ArrowUpRight,
@@ -14,15 +14,17 @@ import {
     X
 } from "lucide-react";
 import { Transaction } from "../services/transactionService";
+import { Account } from "../services/accountService";
 
 interface TransactionDetailsProps {
     transaction: Transaction | null;
-    accounts: { accountId: string; accountNumber: string }[];
+    accounts: Account[];
     onClose: () => void;
 }
 
 const TransactionDetails = ({ transaction, accounts, onClose }: TransactionDetailsProps) => {
     const { toast } = useToast();
+    const { getMaskedAccountNumber } = useAccountMasking(accounts);
 
     if (!transaction) {
         return null;
@@ -63,10 +65,10 @@ const TransactionDetails = ({ transaction, accounts, onClose }: TransactionDetai
         }
     };
 
-    const formatCurrency = (amount: number, currency: string) => {
+    const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: currency,
+            currency: 'USD',
         }).format(amount);
     };
 
@@ -79,11 +81,6 @@ const TransactionDetails = ({ transaction, accounts, onClose }: TransactionDetai
             minute: '2-digit',
             second: '2-digit'
         });
-    };
-
-    const getAccountNumber = (accountId: string) => {
-        const account = accounts.find(acc => acc.accountId === accountId);
-        return account ? `****${account.accountNumber.slice(-4)}` : accountId;
     };
 
     return (
@@ -126,7 +123,7 @@ const TransactionDetails = ({ transaction, accounts, onClose }: TransactionDetai
                     </div>
                     <div className="text-right">
                         <p className="text-2xl font-bold">
-                            {formatCurrency(transaction.amount, transaction.currency)}
+                            {formatCurrency(transaction.amount)}
                         </p>
                         <p className="text-sm text-muted-foreground">
                             {transaction.currency}
@@ -144,7 +141,7 @@ const TransactionDetails = ({ transaction, accounts, onClose }: TransactionDetai
 
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
-                                <Label className="text-sm text-muted-foreground">Transaction ID</Label>
+                                <span className="text-sm text-muted-foreground">Transaction ID</span>
                                 <div className="flex items-center space-x-2">
                                     <span className="font-mono text-sm">{transaction.transactionId}</span>
                                     <Button
@@ -159,31 +156,21 @@ const TransactionDetails = ({ transaction, accounts, onClose }: TransactionDetai
                             </div>
 
                             <div className="flex items-center justify-between">
-                                <Label className="text-sm text-muted-foreground">Type</Label>
-                                <div className="flex items-center space-x-2">
-                                    {getTransactionIcon(transaction.type)}
-                                    <span className="font-medium capitalize">
-                                        {transaction.type.toLowerCase()}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                                <Label className="text-sm text-muted-foreground">Amount</Label>
-                                <span className="font-semibold">
-                                    {formatCurrency(transaction.amount, transaction.currency)}
+                                <span className="text-sm text-muted-foreground">Type</span>
+                                <span className="font-medium capitalize">
+                                    {transaction.type.toLowerCase()}
                                 </span>
                             </div>
 
                             <div className="flex items-center justify-between">
-                                <Label className="text-sm text-muted-foreground">Status</Label>
-                                <Badge className={getStatusColor(transaction.status)}>
-                                    {transaction.status.toLowerCase()}
-                                </Badge>
+                                <span className="text-sm text-muted-foreground">Amount</span>
+                                <span className="font-semibold">
+                                    {formatCurrency(transaction.amount)}
+                                </span>
                             </div>
 
                             <div className="flex items-center justify-between">
-                                <Label className="text-sm text-muted-foreground">Date & Time</Label>
+                                <span className="text-sm text-muted-foreground">Date & Time</span>
                                 <div className="flex items-center space-x-2">
                                     <Calendar className="w-4 h-4 text-muted-foreground" />
                                     <span className="text-sm">
@@ -203,58 +190,26 @@ const TransactionDetails = ({ transaction, accounts, onClose }: TransactionDetai
                         <div className="space-y-3">
                             {transaction.fromAccountId && (
                                 <div className="flex items-center justify-between">
-                                    <Label className="text-sm text-muted-foreground">From Account</Label>
-                                    <div className="flex items-center space-x-2">
-                                        <span className="font-mono text-sm">
-                                            {getAccountNumber(transaction.fromAccountId)}
-                                        </span>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() => copyToClipboard(transaction.fromAccountId!, 'From Account ID')}
-                                            className="p-1 h-6 w-6"
-                                        >
-                                            <Copy className="w-3 h-3" />
-                                        </Button>
-                                    </div>
+                                    <span className="text-sm text-muted-foreground">From Account</span>
+                                    <span className="font-mono text-sm">
+                                        {getMaskedAccountNumber(transaction.fromAccountId)}
+                                    </span>
                                 </div>
                             )}
 
                             {transaction.toAccountId && (
                                 <div className="flex items-center justify-between">
-                                    <Label className="text-sm text-muted-foreground">To Account</Label>
-                                    <div className="flex items-center space-x-2">
-                                        <span className="font-mono text-sm">
-                                            {getAccountNumber(transaction.toAccountId)}
-                                        </span>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() => copyToClipboard(transaction.toAccountId!, 'To Account ID')}
-                                            className="p-1 h-6 w-6"
-                                        >
-                                            <Copy className="w-3 h-3" />
-                                        </Button>
-                                    </div>
+                                    <span className="text-sm text-muted-foreground">To Account</span>
+                                    <span className="font-mono text-sm">
+                                        {getMaskedAccountNumber(transaction.toAccountId)}
+                                    </span>
                                 </div>
                             )}
 
                             <div className="flex items-center justify-between">
-                                <Label className="text-sm text-muted-foreground">Currency</Label>
+                                <span className="text-sm text-muted-foreground">Currency</span>
                                 <span className="font-medium">{transaction.currency}</span>
                             </div>
-
-                            {transaction.description && (
-                                <div className="flex items-start justify-between">
-                                    <Label className="text-sm text-muted-foreground">Description</Label>
-                                    <div className="flex items-start space-x-2 max-w-xs">
-                                        <FileText className="w-4 h-4 text-muted-foreground mt-0.5" />
-                                        <span className="text-sm text-right">
-                                            {transaction.description}
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>

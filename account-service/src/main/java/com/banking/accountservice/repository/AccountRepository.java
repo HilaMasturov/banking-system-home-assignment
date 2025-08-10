@@ -17,10 +17,6 @@ public interface AccountRepository extends MongoRepository<Account, String> {
 
     Optional<Account> findByAccountNumber(String accountNumber);
 
-    @Query("{'customerId': ?0, 'status': 'ACTIVE'}")
-    List<Account> findActiveAccountsByCustomerId(String customerId);
-
     boolean existsByAccountNumber(String accountNumber);
 
-    List<Account> findByStatus(AccountStatus status);
 }
