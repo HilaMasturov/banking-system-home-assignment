@@ -1,6 +1,5 @@
-// src/components/TransactionForm.tsx
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card.tsx";
+import { Card, CardContent} from "../ui/card.tsx";
 import { Button } from "../ui/button.tsx";
 import { Input } from "../ui/input.tsx";
 import { Label } from "../ui/label.tsx";
@@ -12,7 +11,6 @@ import {
     Send,
     Download,
     ArrowUpRight,
-    CreditCard,
     AlertCircle
 } from "lucide-react";
 import { Account } from "../services/accountService";

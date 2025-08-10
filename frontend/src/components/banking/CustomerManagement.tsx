@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card.tsx";
+import { Button } from "../ui/button.tsx";
+import { Input } from "../ui/input.tsx";
+import { Label } from "../ui/label.tsx";
+import { Badge } from "../ui/badge.tsx";
+import { useToast } from "../../hooks/use-toast.ts";
 import {
     Dialog,
     DialogContent,
@@ -13,7 +13,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog";
+} from "../ui/dialog.tsx";
 import {
     UserPlus,
     Users,
@@ -60,7 +60,6 @@ const CustomerManagement = ({ onCustomerChange, currentCustomer, showCustomerSel
             const customersData = await customerService.getAllCustomers();
             setCustomers(customersData);
         } catch (error) {
-            console.error("Error loading customers:", error);
             toast({
                 title: "Error",
                 description: "Failed to load customers",
@@ -117,7 +116,6 @@ const CustomerManagement = ({ onCustomerChange, currentCustomer, showCustomerSel
                 description: "Customer created successfully",
             });
         } catch (error) {
-            console.error("Error creating customer:", error);
             toast({
                 title: "Error",
                 description: "Failed to create customer",

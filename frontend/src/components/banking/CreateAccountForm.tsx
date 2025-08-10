@@ -5,11 +5,7 @@ import { Input } from "../ui/input.tsx";
 import { Label } from "../ui/label.tsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select.tsx";
 import { useToast } from "../../hooks/use-toast.ts";
-import {
-    UserPlus,
-    CreditCard,
-    AlertCircle
-} from "lucide-react";
+import {UserPlus, CreditCard} from "lucide-react";
 import { accountService, CreateAccountRequest } from "../services/accountService";
 
 interface CreateAccountFormProps {
@@ -64,9 +60,7 @@ const CreateAccountForm = ({ onAccountCreated, customerId }: CreateAccountFormPr
                 initialDeposit: formData.initialDeposit ? parseFloat(formData.initialDeposit) : 0
             };
 
-            console.log('🏦 Creating new account:', createRequest);
             const newAccount = await accountService.createAccount(createRequest);
-            console.log('✅ Account created successfully:', newAccount);
 
             toast({
                 title: "Account Created",
@@ -85,7 +79,6 @@ const CreateAccountForm = ({ onAccountCreated, customerId }: CreateAccountFormPr
             onAccountCreated();
 
         } catch (error) {
-            console.error('❌ Failed to create account:', error);
             const errorMessage = error instanceof Error ? error.message : 'Failed to create account';
             toast({
                 title: "Account Creation Failed",

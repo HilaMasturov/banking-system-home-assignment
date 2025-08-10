@@ -17,18 +17,4 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
 
     @Query("{'$or': [{'fromAccountId': ?0}, {'toAccountId': ?0}]}")
     Page<Transaction> findByAccountId(String accountId, Pageable pageable);
-
-    List<Transaction> findByFromAccountId(String fromAccountId);
-
-    List<Transaction> findByToAccountId(String toAccountId);
-
-    List<Transaction> findByStatus(TransactionStatus status);
-
-    List<Transaction> findByType(TransactionType type);
-
-    @Query("{'createdAt': {'$gte': ?0, '$lte': ?1}}")
-    List<Transaction> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
-
-    @Query("{'$or': [{'fromAccountId': ?0}, {'toAccountId': ?0}], 'createdAt': {'$gte': ?1, '$lte': ?2}}")
-    List<Transaction> findByAccountIdAndCreatedAtBetween(String accountId, LocalDateTime startDate, LocalDateTime endDate);
 }

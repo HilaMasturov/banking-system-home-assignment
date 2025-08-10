@@ -23,17 +23,8 @@ class CustomerService {
         return await apiClient.post<Customer>(this.baseUrl, customerData);
     }
 
-    async getCustomer(customerId: string): Promise<Customer> {
-        return await apiClient.get<Customer>(`${this.baseUrl}/${customerId}`);
-    }
-
     async getAllCustomers(): Promise<Customer[]> {
         return await apiClient.get<Customer[]>(this.baseUrl);
-    }
-
-    async customerExists(customerId: string): Promise<boolean> {
-        const response = await apiClient.get<{ exists: boolean }>(`${this.baseUrl}/${customerId}/exists`);
-        return response.exists;
     }
 
     async customerExistsByEmail(email: string): Promise<boolean> {
