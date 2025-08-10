@@ -104,6 +104,10 @@ export const useBankingSystemState = () => {
                 setTransactions([]);
                 setTotalTransactions(0);
                 setTotalTransactionPages(0);
+                // Reset view mode when no accounts exist
+                setViewMode("all");
+                setSelectedAccountId("");
+                setSelectedAccount(null);
             }
 
         } catch (error) {
@@ -349,8 +353,13 @@ export const useBankingSystemState = () => {
     };
 
     useEffect(() => {
-        // Reset pagination when customer changes
+        // Reset pagination and account selection when customer changes
         setTransactionPage(0);
+        setSelectedAccountId("");
+        setSelectedAccount(null);
+        setViewMode("all");
+        setTotalTransactions(0);
+        setTotalTransactionPages(0);
         loadData();
     }, [currentCustomer]);
 
