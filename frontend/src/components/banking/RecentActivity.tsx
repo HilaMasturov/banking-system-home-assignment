@@ -41,7 +41,7 @@ const RecentActivity = ({
                         )}
                     </div>
                     <span className="text-sm text-muted-foreground">
-                        ({transactions.length} total)
+                        ({totalTransactions} total)
                     </span>
                 </CardTitle>
             </CardHeader>
@@ -55,14 +55,11 @@ const RecentActivity = ({
                     <TransactionList 
                         transactions={transactions.slice(0, 5)} 
                         onTransactionClick={onTransactionClick}
-                        accounts={accounts.map(acc => ({
-                            accountId: acc.accountId,
-                            accountNumber: acc.accountNumber
-                        }))}
+                        accounts={accounts}
                         showPagination={false}
                     />
                 )}
-                {transactions.length > 5 && (
+                {totalTransactions > 5 && (
                     <Button
                         variant="outline"
                         className="w-full mt-4"

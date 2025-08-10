@@ -1,0 +1,21 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/banking_transactions_test
+
+logging:
+  level:
+    com.banking: DEBUG
+    org.springframework.data.mongodb: DEBUG
+
+# Test-specific settings
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# Account service URL for tests
+account-service:
+  url: http://localhost:8081
+  timeout: 5000

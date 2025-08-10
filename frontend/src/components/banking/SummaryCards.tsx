@@ -6,11 +6,12 @@ import { Transaction } from "../services/transactionService";
 interface SummaryCardsProps {
     accounts: Account[];
     transactions: Transaction[];
+    totalTransactions: number;
     balancesByCurrency: Record<string, number>;
     formatCurrencyBalance: (amount: number, currency: string) => string;
 }
 
-const SummaryCards = ({ accounts, transactions, balancesByCurrency, formatCurrencyBalance }: SummaryCardsProps) => {
+const SummaryCards = ({ accounts, transactions, totalTransactions, balancesByCurrency, formatCurrencyBalance }: SummaryCardsProps) => {
     const activeAccounts = accounts.filter(account => account.status === 'ACTIVE');
 
     return (
@@ -56,7 +57,7 @@ const SummaryCards = ({ accounts, transactions, balancesByCurrency, formatCurren
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                         <div className="ml-2">
                             <p className="text-sm font-medium text-muted-foreground">Total Transactions</p>
-                            <p className="text-2xl font-bold">{transactions.length}</p>
+                            <p className="text-2xl font-bold">{totalTransactions}</p>
                         </div>
                     </div>
                 </CardContent>

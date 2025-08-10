@@ -41,6 +41,7 @@ const DashboardTab = ({
             <SummaryCards
                 accounts={accounts}
                 transactions={transactions}
+                totalTransactions={totalTransactions}
                 balancesByCurrency={balancesByCurrency}
                 formatCurrencyBalance={formatCurrencyBalance}
             />

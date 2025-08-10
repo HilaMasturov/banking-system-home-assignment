@@ -18,7 +18,7 @@ interface TransactionsTabProps {
     totalTransactions: number;
     transactionPageSize: number;
     onAccountSelectionChange: (viewMode: "all" | "specific", accountId?: string) => void;
-    onTransactionSubmit: (transactionData: any) => void;
+    onTransactionSubmit: (transactionData: any) => Promise<void>;
     onTransactionClick: (transaction: Transaction) => void;
     onPageChange: (page: number) => void;
     onPageSizeChange: (pageSize: number) => void;
@@ -144,7 +144,7 @@ const TransactionsTab = ({
                                     ({totalTransactions} total)
                                 </>
                             ) : (
-                                `(${transactions.length} transactions)`
+                                `(${transactions.length} transactions loaded)`
                             )}
                         </span>
                     </CardTitle>
@@ -159,10 +159,7 @@ const TransactionsTab = ({
                         <TransactionList 
                             transactions={transactions} 
                             onTransactionClick={onTransactionClick}
-                            accounts={accounts.map(acc => ({
-                                accountId: acc.accountId,
-                                accountNumber: acc.accountNumber
-                            }))}
+                            accounts={accounts}
                             currentPage={transactionPage}
                             totalPages={totalTransactionPages}
                             totalElements={totalTransactions}
